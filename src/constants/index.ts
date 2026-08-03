@@ -1,0 +1,10 @@
+export const APP_NAME = 'MyTracker'
+export const APP_TAGLINE = 'Enterprise Project Management'
+export const DEFAULT_ORG = 'Acme Digital'
+export const OTP_DEMO_HINT = '123456'
+export const SESSION_STORAGE_KEY = 'mytracker.session'
+export const PENDING_EMAIL_KEY = 'mytracker.pending-email'
+export const THEME_STORAGE_KEY = 'mytracker.theme'
+export const SIDEBAR_STORAGE_KEY = 'mytracker.sidebar'
+export const SESSION_LOAD_MS = 1400
+export const RESEND_COOLDOWN_SECONDS = 30

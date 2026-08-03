@@ -1,0 +1,369 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ================================================================== */
+/*  MyTracker Design Tokens                                            */
+/* ================================================================== */
+
+:root {
+  /* Brand (Orange) */
+  --brand-50: #fff7ed;
+  --brand-100: #ffedd5;
+  --brand-200: #fed7aa;
+  --brand-300: #fdba74;
+  --brand-400: #fb923c;
+  --brand-500: #f97316;
+  --brand-600: #ea580c;
+  --brand-700: #c2410c;
+  --brand-800: #9a3412;
+  --brand-900: #7c2d12;
+
+  /* Neutrals */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
+
+  /* Surfaces */
+  --background: #fafafa;
+  --surface: #ffffff;
+  --surface-muted: #fafafa;
+  --surface-subtle: #f5f5f6;
+  --foreground: #111827;
+
+  /* Borders */
+  --border: #ececec;
+  --border-strong: #d9d9de;
+
+  /* Semantic */
+  --primary: #f97316;
+  --primary-strong: #ea580c;
+  --primary-soft: #fff7ed;
+  --primary-foreground: #ffffff;
+
+  --accent: #fb923c;
+  --accent-soft: #fff7ed;
+  --accent-foreground: #9a3412;
+
+  --secondary: #f3f4f6;
+  --secondary-foreground: #1f2937;
+
+  --muted: #f3f4f6;
+  --muted-foreground: #71717a;
+
+  --success: #22c55e;
+  --success-soft: #f0fdf4;
+  --success-foreground: #166534;
+
+  --warning: #f59e0b;
+  --warning-soft: #fffbeb;
+  --warning-foreground: #92400e;
+
+  --danger: #ef4444;
+  --danger-soft: #fef2f2;
+  --danger-foreground: #991b1b;
+
+  --info: #3b82f6;
+  --info-soft: #eff6ff;
+  --info-foreground: #1d4ed8;
+
+  --ring: rgba(249, 115, 22, 0.35);
+  --ring-focus: #f97316;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #111827;
+  --sidebar-muted: #6b7280;
+  --sidebar-border: #f1f1f3;
+  --sidebar-accent: #f6f6f7;
+  --sidebar-accent-foreground: #111827;
+  --sidebar-primary: #f97316;
+  --sidebar-primary-foreground: #ffffff;
+
+  /* Charts */
+  --chart-1: #f97316;
+  --chart-2: #3b82f6;
+  --chart-3: #10b981;
+  --chart-4: #8b5cf6;
+  --chart-5: #f59e0b;
+  --chart-6: #ef4444;
+
+  /* Radii */
+  --radius-xs: 0.375rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-3xl: 1.5rem;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgb(17 24 39 / 0.04);
+  --shadow-sm: 0 1px 2px rgb(17 24 39 / 0.05), 0 1px 3px rgb(17 24 39 / 0.04);
+  --shadow-md: 0 2px 4px rgb(17 24 39 / 0.04), 0 4px 12px rgb(17 24 39 / 0.06);
+  --shadow-lg: 0 4px 8px rgb(17 24 39 / 0.04), 0 8px 24px rgb(17 24 39 / 0.08);
+  --shadow-xl: 0 8px 16px rgb(17 24 39 / 0.06), 0 16px 40px rgb(17 24 39 / 0.1);
+
+  /* Motion */
+  --duration-fast: 180ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dark {
+  --brand-50: #431407;
+  --brand-100: #7c2d12;
+  --brand-200: #9a3412;
+  --brand-300: #c2410c;
+  --brand-400: #ea580c;
+  --brand-500: #f97316;
+  --brand-600: #fb923c;
+  --brand-700: #fdba74;
+  --brand-800: #fed7aa;
+  --brand-900: #ffedd5;
+
+  --gray-50: #0a0a0b;
+  --gray-100: #121214;
+  --gray-200: #1c1c20;
+  --gray-300: #2b2b30;
+  --gray-400: #3f3f46;
+  --gray-500: #71717a;
+  --gray-600: #9d9da3;
+  --gray-700: #c2c2c7;
+  --gray-800: #e4e4e7;
+  --gray-900: #f4f4f5;
+  --gray-950: #fafafa;
+
+  --background: #09090b;
+  --surface: #0f0f11;
+  --surface-muted: #0b0b0d;
+  --surface-subtle: #131316;
+  --foreground: #fafafa;
+
+  --border: #1f1f23;
+  --border-strong: #2b2b30;
+
+  --primary: #f97316;
+  --primary-strong: #fb923c;
+  --primary-soft: #2a1608;
+  --primary-foreground: #ffffff;
+
+  --success: #4ade80;
+  --success-soft: #0c1f12;
+  --success-foreground: #86efac;
+
+  --warning: #fbbf24;
+  --warning-soft: #211805;
+  --warning-foreground: #fcd34d;
+
+  --danger: #f87171;
+  --danger-soft: #220f10;
+  --danger-foreground: #fca5a5;
+
+  --info: #60a5fa;
+  --info-soft: #0d1b2e;
+  --info-foreground: #93c5fd;
+
+  --muted: #17171a;
+  --muted-foreground: #9d9da3;
+  --secondary: #1c1c20;
+  --secondary-foreground: #fafafa;
+
+  --ring: rgba(251, 146, 60, 0.4);
+  --ring-focus: #fb923c;
+
+  --sidebar: #0f0f11;
+  --sidebar-foreground: #fafafa;
+  --sidebar-muted: #9d9da3;
+  --sidebar-border: #1a1a1e;
+  --sidebar-accent: #1a1a1e;
+  --sidebar-accent-foreground: #fafafa;
+  --sidebar-primary: #f97316;
+  --sidebar-primary-foreground: #ffffff;
+
+  --chart-1: #fb923c;
+  --chart-2: #60a5fa;
+  --chart-3: #34d399;
+  --chart-4: #a78bfa;
+  --chart-5: #fbbf24;
+  --chart-6: #f87171;
+
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3), 0 1px 3px rgb(0 0 0 / 0.24);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.3), 0 4px 12px rgb(0 0 0 / 0.32);
+  --shadow-lg: 0 4px 8px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.4);
+  --shadow-xl: 0 8px 16px rgb(0 0 0 / 0.4), 0 16px 40px rgb(0 0 0 / 0.5);
+}
+
+@theme inline {
+  --font-sans: 'Geist Variable', 'Inter Variable', ui-sans-serif, system-ui, -apple-system,
+    'Segoe UI', sans-serif;
+  --font-mono: 'Geist Mono Variable', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-300: var(--brand-300);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+  --color-brand-800: var(--brand-800);
+  --color-brand-900: var(--brand-900);
+
+  --color-gray-50: var(--gray-50);
+  --color-gray-100: var(--gray-100);
+  --color-gray-200: var(--gray-200);
+  --color-gray-300: var(--gray-300);
+  --color-gray-400: var(--gray-400);
+  --color-gray-500: var(--gray-500);
+  --color-gray-600: var(--gray-600);
+  --color-gray-700: var(--gray-700);
+  --color-gray-800: var(--gray-800);
+  --color-gray-900: var(--gray-900);
+  --color-gray-950: var(--gray-950);
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-foreground: var(--foreground);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-primary: var(--primary);
+  --color-primary-strong: var(--primary-strong);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-foreground: var(--info-foreground);
+  --color-ring: var(--ring);
+  --color-ring-focus: var(--ring-focus);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-2xl: var(--radius-2xl);
+  --radius-3xl: var(--radius-3xl);
+
+  --shadow-xs: var(--shadow-xs);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+
+  --duration-fast: var(--duration-fast);
+  --ease-out: var(--ease-out);
+
+  --animate-accordion-down: accordion-down 0.2s var(--ease-out);
+  --animate-accordion-up: accordion-up 0.2s var(--ease-out);
+}
+
+/* ================================================================== */
+/*  Base                                                               */
+/* ================================================================== */
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  ::selection {
+    background-color: var(--color-primary-soft);
+    color: var(--color-primary-strong);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-ring-focus);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--color-border-strong);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* ================================================================== */
+/*  Utilities                                                          */
+/* ================================================================== */
+
+@utility scrollbar-none {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+/* Radix / popover entrance animations come from tw-animate-css (fade-in-0 etc.) */
