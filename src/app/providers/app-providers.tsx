@@ -4,7 +4,7 @@ import { QueryProvider } from './query-provider'
 
 /**
  * Global providers that need the component tree.
- * State lives in Zustand stores (theme, auth, command palette) and needs no provider.
+ * State lives in Zustand stores (auth, command palette) and needs no provider.
  */
 export function AppProviders({ children }: { children: ReactNode }) {
   return (

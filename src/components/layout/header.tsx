@@ -14,7 +14,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { SearchBox } from '@/components/common/search-box'
 import { UserAvatar } from '@/components/common/user-avatar'
 import { QuickCreate } from '@/components/common/quick-create'
-import { ThemeToggle } from '@/components/common/theme-toggle'
 import { NotificationsDrawer } from '@/components/common/notifications-drawer'
 import { useCommandPalette } from '@/store/command-palette'
 import { useAuth } from '@/store/auth'
@@ -96,8 +95,6 @@ export function Header({ onMenuClick }: HeaderProps) {
         </TooltipTrigger>
         <TooltipContent>Notifications</TooltipContent>
       </Tooltip>
-
-      <ThemeToggle />
 
       <QuickCreate />
 

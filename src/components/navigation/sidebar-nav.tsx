@@ -46,7 +46,7 @@ function NavLinkItem({ item, activePath, collapsed, onNavigate }: { item: NavIte
         <>
           <span className="flex-1 truncate text-left">{item.label}</span>
           {typeof item.badge === 'number' && item.badge > 0 && (
-            <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[11px] font-medium text-brand-700 dark:text-brand-200">
+            <span className="rounded-full bg-primary-soft px-1.5 py-0.5 text-[11px] font-medium text-brand-700">
               {item.badge}
             </span>
           )}

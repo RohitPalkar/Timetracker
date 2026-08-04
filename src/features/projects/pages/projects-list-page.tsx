@@ -281,7 +281,7 @@ export function ProjectsListPage() {
             type="date"
             value={filters.startFrom ?? ''}
             onChange={(event) => setFilter('startFrom', event.target.value || undefined)}
-            className="h-9 rounded-xl border border-input bg-surface px-3 text-[13px] text-foreground shadow-xs outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-ring dark:[color-scheme:dark]"
+            className="h-9 rounded-xl border border-input bg-surface px-3 text-[13px] text-foreground shadow-xs outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-ring"
             aria-label="Start date from"
           />
         </label>
@@ -291,7 +291,7 @@ export function ProjectsListPage() {
             type="date"
             value={filters.endBefore ?? ''}
             onChange={(event) => setFilter('endBefore', event.target.value || undefined)}
-            className="h-9 rounded-xl border border-input bg-surface px-3 text-[13px] text-foreground shadow-xs outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-ring dark:[color-scheme:dark]"
+            className="h-9 rounded-xl border border-input bg-surface px-3 text-[13px] text-foreground shadow-xs outline-none transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-ring"
             aria-label="End date before"
           />
         </label>

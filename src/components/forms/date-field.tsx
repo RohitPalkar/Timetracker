@@ -50,7 +50,6 @@ export function DateField<T extends FieldValues>({
               disabled={disabled}
               className={cn(
                 'h-10 w-full rounded-xl border border-input bg-surface pl-9 pr-3.5 text-sm text-foreground shadow-xs transition-colors hover:border-border-strong focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring disabled:cursor-not-allowed disabled:opacity-50 aria-[invalid=true]:border-danger',
-                'dark:[color-scheme:dark]',
               )}
               aria-invalid={fieldState.invalid}
               aria-describedby={fieldState.error ? `${name}-error` : undefined}

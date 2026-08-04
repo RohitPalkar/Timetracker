@@ -3,11 +3,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { initials, cn } from '@/lib/utils'
 
 const AVATAR_COLORS = [
-  'bg-brand-100 text-brand-700 dark:bg-brand-200/15 dark:text-brand-200',
-  'bg-info-soft text-info-foreground dark:bg-info/15 dark:text-info-foreground',
-  'bg-success-soft text-success-foreground dark:bg-success/15 dark:text-success-foreground',
-  'bg-warning-soft text-warning-foreground dark:bg-warning/15 dark:text-warning-foreground',
-  'bg-danger-soft text-danger-foreground dark:bg-danger/15 dark:text-danger-foreground',
+  'bg-brand-100 text-brand-700',
+  'bg-info-soft text-info-foreground',
+  'bg-success-soft text-success-foreground',
+  'bg-warning-soft text-warning-foreground',
+  'bg-danger-soft text-danger-foreground',
 ]
 
 export function colorForName(name: string): string {

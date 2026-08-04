@@ -11,9 +11,9 @@ const buttonVariants = cva(
       variant: {
         default:
           'bg-primary text-primary-foreground shadow-xs hover:bg-primary-strong active:scale-[0.98]',
-        soft: 'bg-primary-soft text-brand-700 hover:bg-brand-100 dark:text-brand-200 dark:hover:bg-brand-200/20',
+        soft: 'bg-primary-soft text-brand-700 hover:bg-brand-100',
         secondary:
-          'bg-secondary text-secondary-foreground shadow-xs hover:bg-gray-200/80 active:scale-[0.98] dark:hover:bg-gray-200/20',
+          'bg-secondary text-secondary-foreground shadow-xs hover:bg-gray-200/80 active:scale-[0.98]',
         outline:
           'border border-input bg-surface text-foreground shadow-xs hover:bg-muted hover:border-border-strong active:scale-[0.98]',
         ghost: 'text-foreground hover:bg-muted',
@@ -46,6 +46,14 @@ export interface ButtonProps
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, loading = false, children, disabled, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button'
+    const content = loading ? (
+      <>
+        <Loader2 className="animate-spin" aria-hidden="true" />
+        {children}
+      </>
+    ) : (
+      children
+    )
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
@@ -53,8 +61,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         disabled={disabled || loading}
         {...props}
       >
-        {loading && <Loader2 className="animate-spin" aria-hidden="true" />}
-        {children}
+        {content}
       </Comp>
     )
   },

@@ -2,6 +2,7 @@ import * as React from 'react'
 import {
   type ColumnDef,
   type SortingState,
+  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
@@ -379,7 +380,7 @@ export function DataTable<T>({
                               meta?.className,
                             )}
                           >
-                            {cell.getValue() as React.ReactNode}
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </TableCell>
                         )
                       })}

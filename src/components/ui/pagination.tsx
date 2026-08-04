@@ -38,7 +38,7 @@ const PaginationLink = React.forwardRef<HTMLButtonElement, PaginationLinkProps>(
       className={cn(
         'inline-flex size-8 items-center justify-center rounded-lg text-[13px] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-ring-focus disabled:pointer-events-none disabled:opacity-50',
         active
-          ? 'bg-primary-soft text-brand-700 dark:text-brand-200'
+          ? 'bg-primary-soft text-brand-700'
           : 'text-muted-foreground hover:bg-muted hover:text-foreground',
         className,
       )}

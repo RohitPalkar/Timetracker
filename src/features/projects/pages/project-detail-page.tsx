@@ -10,8 +10,8 @@ import {
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/common/page-header'
+import { Breadcrumb } from '@/components/navigation/breadcrumb'
 import { PageLayout } from '@/components/common/page-layout'
 import { ErrorState } from '@/components/feedback/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -108,22 +108,9 @@ export function ProjectDetailPage() {
     })
   }
 
-  const statusLabel = project.status.replace('_', ' ')
-
   return (
     <PageLayout
-      header={
-        <PageHeader
-          title={project.name}
-          description={`${statusLabel} · ${project.key} · owned by ${managerName}`}
-          breadcrumb={[{ label: 'Projects', to: '/projects' }, { label: project.name }]}
-          actions={
-            <Button onClick={() => setConfirmArchive(true)} variant="outline">
-              Archive
-            </Button>
-          }
-        />
-      }
+      header={<Breadcrumb items={[{ label: 'Projects', to: '/projects' }, { label: project.name }]} />}
     >
       <ProjectHeader
         project={project}

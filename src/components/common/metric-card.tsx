@@ -27,7 +27,7 @@ export interface MetricCardProps extends VariantProps<typeof cardVariants> {
 }
 
 const ICON_TONES = {
-  brand: 'bg-primary-soft text-brand-700 dark:text-brand-200',
+  brand: 'bg-primary-soft text-brand-700',
   neutral: 'bg-muted text-muted-foreground',
   success: 'bg-success-soft text-success-foreground',
   warning: 'bg-warning-soft text-warning-foreground',

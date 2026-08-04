@@ -221,7 +221,7 @@ export function DashboardPage() {
               actions: (
                 <button
                   type="button"
-                  className="text-[13px] font-medium text-brand-600 transition-colors hover:text-brand-700 dark:text-brand-300"
+                  className="text-[13px] font-medium text-brand-600 transition-colors hover:text-brand-700"
                   onClick={() => toast.info('Full backlog arrives in Phase 2.')}
                 >
                   View all →
