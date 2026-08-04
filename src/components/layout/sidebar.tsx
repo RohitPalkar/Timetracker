@@ -6,7 +6,7 @@ import { SidebarNav } from '@/components/navigation/sidebar-nav'
 import { UserAvatar } from '@/components/common/user-avatar'
 import { NAV_GROUPS } from '@/config/navigation'
 import { APP_NAME, DEFAULT_ORG, SIDEBAR_STORAGE_KEY } from '@/constants'
-import { useAuth } from '@/app/providers/auth-provider'
+import { useAuth } from '@/store/auth'
 import { cn } from '@/lib/utils'
 
 interface SidebarProps {

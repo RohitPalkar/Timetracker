@@ -1,5 +1,14 @@
 import * as React from 'react'
 import {
+  type ColumnDef,
+  type SortingState,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  useReactTable,
+} from '@tanstack/react-table'
+import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -37,6 +46,8 @@ export interface DataTableColumn<T> {
   cell: (row: T) => React.ReactNode
   sortable?: boolean
   sortValue?: (row: T) => string | number
+  /** Values matched by the global search box (OR semantics). */
+  searchValue?: (row: T) => string | Array<string | number> | undefined
   align?: 'left' | 'center' | 'right'
   className?: string
   hideable?: boolean
@@ -77,11 +88,30 @@ export interface DataTableProps<T> {
   footer?: React.ReactNode
 }
 
-type SortState = { columnId: string; direction: 'asc' | 'desc' } | null
+interface ColumnMeta {
+  align?: 'left' | 'center' | 'right'
+  className?: string
+}
+
+type SearchAccessor<T> = (row: T) => string | Array<string | number> | undefined
+
+function multiSearch<T>(
+  row: { original: T },
+  term: string,
+  accessors: Array<SearchAccessor<T>>,
+): boolean {
+  const query = term.trim().toLowerCase()
+  if (!query) return true
+  return accessors.some((accessor) => {
+    const value = accessor(row.original)
+    if (Array.isArray(value)) return value.some((part) => String(part).toLowerCase().includes(query))
+    return String(value ?? '').toLowerCase().includes(query)
+  })
+}
 
 export function DataTable<T>({
   data,
-  columns,
+  columns: columnConfig,
   keyField,
   toolbar,
   pagination,
@@ -100,11 +130,11 @@ export function DataTable<T>({
   rowClassName,
   footer,
 }: DataTableProps<T>) {
-  const [sort, setSort] = React.useState<SortState>(null)
-  const [page, setPage] = React.useState(pagination?.initialPage ?? 1)
-  const [visibleColumns, setVisibleColumns] = React.useState<Record<string, boolean>>(() =>
-    Object.fromEntries(columns.filter((column) => column.defaultVisible !== false).map((column) => [column.id, true])),
-  )
+  const [sorting, setSorting] = React.useState<SortingState>([])
+  const [globalFilter, setGlobalFilter] = React.useState('')
+  const [searchValue, setSearchValue] = React.useState(toolbar?.search?.value ?? '')
+  const [pageIndex, setPageIndex] = React.useState((pagination?.initialPage ?? 1) - 1)
+  const [columnVisibility, setColumnVisibility] = React.useState<Record<string, boolean>>({})
   const [internalSelected, setInternalSelected] = React.useState<string[]>([])
 
   const isControlledSelection = selected !== undefined
@@ -118,41 +148,62 @@ export function DataTable<T>({
     [isControlledSelection, onSelectedChange],
   )
 
-  React.useEffect(() => {
-    if (columns.length === 0) return
-    setVisibleColumns((current) => {
-      const next = { ...current }
-      let changed = false
-      for (const column of columns) {
-        if (next[column.id] === undefined) {
-          next[column.id] = column.defaultVisible !== false
-          changed = true
-        }
-      }
-      return changed ? next : current
-    })
-  }, [columns])
+  const columns = React.useMemo<ColumnDef<T, unknown>[]>(
+    () =>
+      columnConfig.map((column) => ({
+        id: column.id,
+        accessorFn: (row: T) => row as unknown,
+        header: column.header as ColumnDef<T, unknown>['header'],
+        cell: ({ row }) => column.cell(row.original),
+        enableSorting: Boolean(column.sortable),
+        sortingFn: column.sortValue
+          ? (rowA, rowB) => {
+              const a = column.sortValue!(rowA.original)
+              const b = column.sortValue!(rowB.original)
+              if (typeof a === 'number' && typeof b === 'number') return a - b
+              return String(a).localeCompare(String(b))
+            }
+          : undefined,
+        meta: {
+          align: column.align,
+          className: column.className,
+        } satisfies ColumnMeta,
+      })),
+    [columnConfig],
+  )
 
-  const sorted = React.useMemo(() => {
-    if (!sort) return data
-    const column = columns.find((candidate) => candidate.id === sort.columnId)
-    const getter = column?.sortValue
-    if (!column || !getter) return data
-    const factor = sort.direction === 'asc' ? 1 : -1
-    return [...data].sort((a, b) => {
-      const av = getter(a)
-      const bv = getter(b)
-      if (typeof av === 'number' && typeof bv === 'number') return (av - bv) * factor
-      return String(av).localeCompare(String(bv)) * factor
-    })
-  }, [data, sort, columns])
+  const searchAccessors = React.useMemo<Array<SearchAccessor<T>>>(
+    () => columnConfig.filter((column) => column.searchValue).map((column) => column.searchValue!),
+    [columnConfig],
+  )
 
-  const pageSize = pagination?.pageSize
-  const totalPages = pageSize ? Math.max(1, Math.ceil(sorted.length / pageSize)) : 1
-  const safePage = Math.min(page, totalPages)
-  const visibleRows = pageSize ? sorted.slice((safePage - 1) * pageSize, safePage * pageSize) : sorted
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+      globalFilter,
+      columnVisibility,
+      pagination: pagination ? { pageIndex, pageSize: pagination.pageSize } : undefined,
+    },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    onColumnVisibilityChange: setColumnVisibility,
+    getRowId: (row) => keyField(row),
+    globalFilterFn: (row, _columnId, term) => multiSearch(row, term, searchAccessors),
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: searchAccessors.length > 0 ? getFilteredRowModel() : undefined,
+    getPaginationRowModel: pagination ? getPaginationRowModel() : undefined,
+    autoResetPageIndex: false,
+  })
 
-  const allKeys = visibleRows.map(keyField)
+  const visibleRows = table.getRowModel().rows
+  const totalRows = table.getFilteredRowModel().rows.length
+  const totalPages = pagination ? Math.max(1, table.getPageCount()) : 1
+  const safePage = pagination ? Math.min(pageIndex + 1, totalPages) : 1
+
+  const allKeys = visibleRows.map((row) => row.id)
   const allSelected = allKeys.length > 0 && allKeys.every((key) => selectedKeys.includes(key))
   const someSelected = allKeys.some((key) => selectedKeys.includes(key)) && !allSelected
 
@@ -173,28 +224,40 @@ export function DataTable<T>({
     setSelectedKeys([...next])
   }
 
-  const toggleSort = (columnId: string) => {
-    setSort((current) => {
-      if (current?.columnId !== columnId) return { columnId, direction: 'asc' }
-      if (current.direction === 'asc') return { columnId, direction: 'desc' }
-      return null
-    })
-  }
+  const pageStart = pagination ? safePage * pagination.pageSize - pagination.pageSize + 1 : 1
+  const pageEnd = pagination ? Math.min(safePage * pagination.pageSize, totalRows) : totalRows
 
-  const pageStart = pageSize ? (safePage - 1) * pageSize + 1 : 1
-  const pageEnd = pageSize ? Math.min(safePage * pageSize, sorted.length) : sorted.length
+  const handleSearch = (value: string) => {
+    setSearchValue(value)
+    setGlobalFilter(value)
+    toolbar?.search?.onValueChange(value)
+    setPageIndex(0)
+  }
 
   return (
     <div className={cn('flex flex-col gap-3', className)}>
       {(toolbar || columnToggle) && (
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-1 flex-wrap items-center gap-2">
-            {toolbar?.search && <DataTableSearch {...toolbar.search} />}
+            {toolbar?.search && (
+              <DataTableSearch value={searchValue} onValueChange={handleSearch} placeholder={toolbar.search.placeholder} />
+            )}
             {toolbar?.filters}
           </div>
           <div className="flex items-center gap-2">
             {toolbar?.actions}
-            {columnToggle && <ColumnToggleMenu columns={columns} visible={visibleColumns} onChange={setVisibleColumns} />}
+            {columnToggle && (
+              <ColumnToggleMenu
+                columns={columnConfig}
+                visibility={table.getState().columnVisibility}
+                onToggle={(columnId) =>
+                  table.setColumnVisibility((previous) => ({
+                    ...previous,
+                    [columnId]: previous[columnId] === false ? true : false,
+                  }))
+                }
+              />
+            )}
           </div>
         </div>
       )}
@@ -214,66 +277,62 @@ export function DataTable<T>({
                     />
                   </TableHead>
                 )}
-                {columns
-                  .filter((column) => visibleColumns[column.id])
-                  .map((column) => (
+                {table.getVisibleLeafColumns().map((column) => {
+                  const meta = column.columnDef.meta as ColumnMeta | undefined
+                  const isSorted = column.getIsSorted()
+                  return (
                     <TableHead
                       key={column.id}
                       className={cn(
                         'whitespace-nowrap',
-                        column.align === 'right' && 'text-right',
-                        column.align === 'center' && 'text-center',
-                        column.sortable && 'cursor-pointer select-none hover:text-foreground',
-                        column.className,
+                        meta?.align === 'right' && 'text-right',
+                        meta?.align === 'center' && 'text-center',
+                        column.getCanSort() && 'cursor-pointer select-none hover:text-foreground',
+                        meta?.className,
                       )}
                       aria-sort={
-                        sort?.columnId === column.id
-                          ? sort.direction === 'asc'
-                            ? 'ascending'
-                            : 'descending'
-                          : undefined
+                        isSorted === 'asc' ? 'ascending' : isSorted === 'desc' ? 'descending' : undefined
                       }
                     >
-                      {column.sortable ? (
+                      {column.getCanSort() ? (
                         <button
                           type="button"
                           className="inline-flex items-center gap-1 uppercase tracking-wide"
-                          onClick={() => toggleSort(column.id)}
+                          onClick={column.getToggleSortingHandler()}
                         >
-                          {column.header}
-                          {sort?.columnId === column.id ? (
-                            sort.direction === 'asc' ? (
-                              <ChevronUp className="size-3.5" />
-                            ) : (
-                              <ChevronDown className="size-3.5" />
-                            )
+                          {column.columnDef.header as React.ReactNode}
+                          {isSorted === 'asc' ? (
+                            <ChevronUp className="size-3.5" />
+                          ) : isSorted === 'desc' ? (
+                            <ChevronDown className="size-3.5" />
                           ) : (
                             <ChevronsUpDown className="size-3.5 opacity-40" />
                           )}
                         </button>
                       ) : (
-                        column.header
+                        (column.columnDef.header as React.ReactNode)
                       )}
                     </TableHead>
-                  ))}
+                  )
+                })}
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={columns.length + (enableSelection ? 1 : 0)} className="p-0">
-                    <TableSkeleton rows={Math.min(pageSize ?? 5, 6)} cols={columns.length} />
+                  <TableCell colSpan={table.getAllLeafColumns().length + (enableSelection ? 1 : 0)} className="p-0">
+                    <TableSkeleton rows={Math.min(pagination?.pageSize ?? 5, 6)} cols={table.getAllLeafColumns().length} />
                   </TableCell>
                 </TableRow>
               ) : error ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={columns.length + (enableSelection ? 1 : 0)}>
+                  <TableCell colSpan={table.getAllLeafColumns().length + (enableSelection ? 1 : 0)}>
                     <ErrorState compact onRetry={onRetry} description={error} />
                   </TableCell>
                 </TableRow>
               ) : visibleRows.length === 0 ? (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={columns.length + (enableSelection ? 1 : 0)}>
+                  <TableCell colSpan={table.getAllLeafColumns().length + (enableSelection ? 1 : 0)}>
                     <EmptyState
                       compact
                       title={empty?.title ?? 'No results found'}
@@ -286,7 +345,7 @@ export function DataTable<T>({
                 </TableRow>
               ) : (
                 visibleRows.map((row) => {
-                  const key = keyField(row)
+                  const key = row.id
                   const isSelected = selectedKeys.includes(key)
                   return (
                     <TableRow
@@ -294,10 +353,10 @@ export function DataTable<T>({
                       data-state={isSelected ? 'selected' : undefined}
                       className={cn(
                         onRowClick && 'cursor-pointer',
-                        rowClassName?.(row),
+                        rowClassName?.(row.original),
                         isSelected && 'bg-primary-soft/40 hover:bg-primary-soft/60',
                       )}
-                      onClick={onRowClick ? () => onRowClick(row) : undefined}
+                      onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                     >
                       {enableSelection && (
                         <TableCell className="w-10 px-3">
@@ -309,20 +368,21 @@ export function DataTable<T>({
                           />
                         </TableCell>
                       )}
-                      {columns
-                        .filter((column) => visibleColumns[column.id])
-                        .map((column) => (
+                      {row.getVisibleCells().map((cell) => {
+                        const meta = cell.column.columnDef.meta as ColumnMeta | undefined
+                        return (
                           <TableCell
-                            key={column.id}
+                            key={cell.id}
                             className={cn(
-                              column.align === 'right' && 'text-right',
-                              column.align === 'center' && 'text-center',
-                              column.className,
+                              meta?.align === 'right' && 'text-right',
+                              meta?.align === 'center' && 'text-center',
+                              meta?.className,
                             )}
                           >
-                            {column.cell(row)}
+                            {cell.getValue() as React.ReactNode}
                           </TableCell>
-                        ))}
+                        )
+                      })}
                     </TableRow>
                   )
                 })
@@ -334,7 +394,7 @@ export function DataTable<T>({
         {footer && <div className="border-t border-border px-4 py-3">{footer}</div>}
       </div>
 
-      {pagination && !loading && !error && (
+      {pagination && !loading && !error && totalPages > 1 && (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13px] text-muted-foreground">
             {enableSelection && selectedKeys.length > 0 ? (
@@ -345,7 +405,7 @@ export function DataTable<T>({
             ) : null}
             Showing <span className="font-medium text-foreground">{pageStart}</span>–
             <span className="font-medium text-foreground">{pageEnd}</span> of{' '}
-            <span className="font-medium text-foreground">{sorted.length}</span>
+            <span className="font-medium text-foreground">{totalRows}</span>
           </p>
           <Pagination>
             <PaginationContent>
@@ -353,7 +413,7 @@ export function DataTable<T>({
                 <PaginationLink
                   aria-label="Previous page"
                   disabled={safePage <= 1}
-                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  onClick={() => setPageIndex((current) => Math.max(0, current - 1))}
                 >
                   <ChevronLeft className="size-4" />
                 </PaginationLink>
@@ -365,7 +425,10 @@ export function DataTable<T>({
                   </PaginationItem>
                 ) : (
                   <PaginationItem key={item}>
-                    <PaginationLink active={item === safePage} onClick={() => setPage(item)}>
+                    <PaginationLink
+                      active={item === safePage}
+                      onClick={() => setPageIndex(item - 1)}
+                    >
                       {item}
                     </PaginationLink>
                   </PaginationItem>
@@ -375,7 +438,7 @@ export function DataTable<T>({
                 <PaginationLink
                   aria-label="Next page"
                   disabled={safePage >= totalPages}
-                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  onClick={() => setPageIndex((current) => Math.min(totalPages - 1, current + 1))}
                 >
                   <ChevronRight className="size-4" />
                 </PaginationLink>
@@ -395,12 +458,13 @@ function DataTableSearch({
 }: NonNullable<DataTableToolbarProps['search']>) {
   return (
     <div className="relative w-full sm:w-64">
-      <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+      <Search
+        className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        aria-hidden="true"
+      />
       <input
         value={value}
-        onChange={(event) => {
-          onValueChange(event.target.value)
-        }}
+        onChange={(event) => onValueChange(event.target.value)}
         placeholder={placeholder}
         aria-label="Search table"
         className="h-10 w-full rounded-xl border border-input bg-surface pl-9 pr-3.5 text-sm text-foreground shadow-xs transition-colors placeholder:text-muted-foreground/70 hover:border-border-strong focus-visible:border-ring-focus/60 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-ring"
@@ -411,12 +475,12 @@ function DataTableSearch({
 
 function ColumnToggleMenu<T>({
   columns,
-  visible,
-  onChange,
+  visibility,
+  onToggle,
 }: {
   columns: DataTableColumn<T>[]
-  visible: Record<string, boolean>
-  onChange: (next: Record<string, boolean>) => void
+  visibility: Record<string, boolean>
+  onToggle: (columnId: string) => void
 }) {
   const toggleable = columns.filter((column) => column.hideable !== false)
   if (toggleable.length === 0) return null
@@ -435,8 +499,8 @@ function ColumnToggleMenu<T>({
         {toggleable.map((column) => (
           <DropdownMenuCheckboxItem
             key={column.id}
-            checked={visible[column.id] ?? false}
-            onCheckedChange={(checked) => onChange({ ...visible, [column.id]: checked })}
+            checked={visibility[column.id] !== false}
+            onCheckedChange={() => onToggle(column.id)}
           >
             {column.header}
           </DropdownMenuCheckboxItem>

@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TextField } from '@/components/forms/text-field'
-import { useAuth } from '@/app/providers/auth-provider'
+import { useAuth } from '@/store/auth'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),

@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Navigate, useNavigate } from 'react-router'
-import { useAuth, SESSION_LOAD_MS } from '@/app/providers/auth-provider'
+import { useAuth, SESSION_LOAD_MS } from '@/store/auth'
 import { Skeleton } from '@/components/ui/skeleton'
 import { APP_NAME } from '@/constants'
 

@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router'
 import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { OtpInput } from '@/components/forms/otp-input'
-import { useAuth } from '@/app/providers/auth-provider'
+import { useAuth } from '@/store/auth'
 import { RESEND_COOLDOWN_SECONDS } from '@/constants'
 import { cn } from '@/lib/utils'
 

@@ -1,20 +1,15 @@
-import * as React from 'react'
+import type { ReactNode } from 'react'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { QueryProvider } from './query-provider'
-import { ThemeProvider } from './theme-provider'
-import { AuthProvider } from './auth-provider'
-import { CommandPaletteProvider } from '@/store/command-palette'
 
-export function AppProviders({ children }: { children: React.ReactNode }) {
+/**
+ * Global providers that need the component tree.
+ * State lives in Zustand stores (theme, auth, command palette) and needs no provider.
+ */
+export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
-      <QueryProvider>
-        <TooltipProvider delayDuration={200}>
-          <AuthProvider>
-            <CommandPaletteProvider>{children}</CommandPaletteProvider>
-          </AuthProvider>
-        </TooltipProvider>
-      </QueryProvider>
-    </ThemeProvider>
+    <QueryProvider>
+      <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+    </QueryProvider>
   )
 }

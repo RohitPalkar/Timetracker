@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from 'react-router'
-import { useAuth } from '@/app/providers/auth-provider'
+import { useAuth } from '@/store/auth'
 
 /** Requires an authenticated session — otherwise redirects to /login. */
 export function ProtectedRoute() {

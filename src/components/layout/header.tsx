@@ -17,7 +17,7 @@ import { QuickCreate } from '@/components/common/quick-create'
 import { ThemeToggle } from '@/components/common/theme-toggle'
 import { NotificationsDrawer } from '@/components/common/notifications-drawer'
 import { useCommandPalette } from '@/store/command-palette'
-import { useAuth } from '@/app/providers/auth-provider'
+import { useAuth } from '@/store/auth'
 import { APP_NAME, DEFAULT_ORG } from '@/constants'
 
 interface HeaderProps {
