@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { epicRepository, releaseRepository, sprintRepository, storyRepository, userService } from '@/services'
+import { bugRepository, epicRepository, releaseRepository, sprintRepository, storyRepository, userService } from '@/services'
 import { projectService } from '@/services'
 import { MAX_LIST_PAGE_SIZE } from '@/constants'
 import type { PlanningFilters } from '@/store/planning'
@@ -12,6 +12,8 @@ export const planningKeys = {
   releases: (projectId: string | null) => ['planning', 'releases', projectId] as const,
   stories: (projectId: string | null, extra?: Record<string, unknown>) =>
     ['planning', 'stories', projectId, extra] as const,
+  bugs: (projectId: string | null, params?: Record<string, unknown>) =>
+    ['planning', 'bugs', projectId, params] as const,
   users: ['planning', 'users'] as const,
 }
 
@@ -134,4 +136,58 @@ export function useStoryMutations() {
   })
 
   return { create, update, move, remove }
+}
+
+/** Sprint mutations with automatic cache invalidation. */
+export function useSprintMutations() {
+  const qc = useQueryClient()
+  const invalidate = () => qc.invalidateQueries({ queryKey: planningKeys.all })
+
+  const create = useMutation({
+    mutationFn: sprintRepository.create,
+    onSuccess: invalidate,
+  })
+  const update = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Parameters<typeof sprintRepository.update>[1] }) =>
+      sprintRepository.update(id, input),
+    onSuccess: invalidate,
+  })
+
+  return { create, update }
+}
+
+/** Bugs for a project. */
+export function usePlanningBugs(
+  projectId: string | null,
+  params?: { search?: string; filters?: PlanningFilters },
+) {
+  return useQuery({
+    queryKey: planningKeys.bugs(projectId, params ?? {}),
+    queryFn: () =>
+      bugRepository.list({
+        projectId: projectId ?? undefined,
+        search: params?.search,
+        filters: params?.filters as Record<string, string | undefined>,
+        sort: { field: 'updatedAt', direction: 'desc' },
+      }),
+    enabled: Boolean(projectId),
+  })
+}
+
+/** Bug mutations with automatic cache invalidation. */
+export function useBugMutations() {
+  const qc = useQueryClient()
+  const invalidate = () => qc.invalidateQueries({ queryKey: planningKeys.all })
+
+  const create = useMutation({
+    mutationFn: bugRepository.create,
+    onSuccess: invalidate,
+  })
+  const update = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Parameters<typeof bugRepository.update>[1] }) =>
+      bugRepository.update(id, input),
+    onSuccess: invalidate,
+  })
+
+  return { create, update }
 }
