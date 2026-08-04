@@ -39,7 +39,7 @@ function nextKey(projectId: string): string {
   return `${prefix}-${max + 1}`
 }
 
-export const bugService = {
+export const bugRepository = {
   async list(params?: BugListParams): Promise<{ items: Bug[]; total: number }> {
     await mockDelay(300)
     const result = bugStore.query({

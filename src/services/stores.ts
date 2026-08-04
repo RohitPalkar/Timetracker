@@ -6,26 +6,33 @@
 import type { Organization, Project, ProjectMember, ProjectMemberRole, User } from '@/types'
 import type { AppNotification } from '@/types/collaboration'
 import type { Milestone } from '@/types'
-import type { Bug, Sprint, Story } from '@/types/agile'
+import type { Bug, Epic, Sprint, Story } from '@/types/agile'
+import type { Release, TimeLog } from '@/types/planning'
 import type { ProjectActivity } from '@/types'
 import { createMockStore } from './mock-store'
 import {
   DEMO_BUGS,
+  DEMO_EPICS,
   DEMO_MILESTONES,
   DEMO_NOTIFICATIONS,
   DEMO_ORGANIZATION,
   DEMO_PROJECTS,
   DEMO_PROJECT_ACTIVITY,
+  DEMO_RELEASES,
   DEMO_SPRINTS,
   DEMO_STORIES,
+  DEMO_TIME_LOGS,
   DEMO_USERS,
 } from '@/mocks/data'
 
 export const userStore = createMockStore<User>(DEMO_USERS)
 export const projectStore = createMockStore<Project>(DEMO_PROJECTS)
+export const epicStore = createMockStore<Epic>(DEMO_EPICS)
 export const storyStore = createMockStore<Story>(DEMO_STORIES)
 export const sprintStore = createMockStore<Sprint>(DEMO_SPRINTS)
 export const bugStore = createMockStore<Bug>(DEMO_BUGS)
+export const releaseStore = createMockStore<Release>(DEMO_RELEASES)
+export const timeLogStore = createMockStore<TimeLog>(DEMO_TIME_LOGS)
 export const milestoneStore = createMockStore<Milestone>(DEMO_MILESTONES)
 export const projectActivityStore = createMockStore<ProjectActivity>(DEMO_PROJECT_ACTIVITY)
 export const notificationStore = createMockStore<AppNotification>(DEMO_NOTIFICATIONS)
@@ -80,9 +87,12 @@ export const organizationStore = createMockStore<Organization>([DEMO_ORGANIZATIO
 export const stores = {
   users: userStore,
   projects: projectStore,
+  epics: epicStore,
   stories: storyStore,
   sprints: sprintStore,
   bugs: bugStore,
+  releases: releaseStore,
+  timeLogs: timeLogStore,
   milestones: milestoneStore,
   projectActivity: projectActivityStore,
   notifications: notificationStore,

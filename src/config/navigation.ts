@@ -1,5 +1,6 @@
 import {
   Boxes,
+  Bug,
   CalendarClock,
   ClipboardList,
   FolderKanban,
@@ -9,6 +10,7 @@ import {
   ListChecks,
   Settings,
   SquareKanban,
+  Target,
   Ticket,
   Users,
   type LucideIcon,
@@ -22,13 +24,15 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [{ label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard, end: true }],
   },
   {
-    label: 'Workspace',
+    label: 'Planning',
     items: [
-      { label: 'Board', to: '/workspace/board', icon: SquareKanban },
-      { label: 'Backlog', to: '/workspace/backlog', icon: ListChecks },
-      { label: 'Sprints', to: '/workspace/sprints', icon: CalendarClock },
-      { label: 'Epics', to: '/workspace/epics', icon: Layers },
-      { label: 'Releases', to: '/workspace/releases', icon: Boxes },
+      { label: 'Backlog', to: '/planning/backlog', icon: ListChecks },
+      { label: 'Board', to: '/planning/board', icon: SquareKanban },
+      { label: 'Sprints', to: '/planning/sprints', icon: CalendarClock },
+      { label: 'Stories', to: '/planning/stories', icon: Target },
+      { label: 'Bugs', to: '/planning/bugs', icon: Bug },
+      { label: 'Epics', to: '/planning/epics', icon: Layers },
+      { label: 'Releases', to: '/planning/releases', icon: Boxes },
     ],
   },
   {

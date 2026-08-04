@@ -18,7 +18,7 @@ export interface UpdateSprintInput extends Partial<CreateSprintInput> {
 }
 
 
-export const sprintService = {
+export const sprintRepository = {
   async list(projectId?: string): Promise<Sprint[]> {
     await mockDelay(300)
     return sprintStore.query({ filters: projectId ? { projectId } : undefined, sort: { field: 'endDate', direction: 'desc' } }).items

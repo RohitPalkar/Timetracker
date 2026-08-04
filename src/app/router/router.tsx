@@ -19,12 +19,16 @@ import {
   ReportsPage,
   SettingsPage,
   TimesheetsPage,
-  WorkspaceBacklogPage,
-  WorkspaceBoardPage,
-  WorkspaceEpicsPage,
-  WorkspaceReleasesPage,
-  WorkspaceSprintsPage,
 } from '@/features/placeholder/modules'
+import {
+  PlanningBacklogPage,
+  PlanningBoardPage,
+  PlanningBugsPage,
+  PlanningEpicsPage,
+  PlanningReleasesPage,
+  PlanningSprintsPage,
+  PlanningStoriesPage,
+} from '@/features/planning/pages/planning-pages'
 
 export const router = createBrowserRouter([
   {
@@ -57,11 +61,13 @@ export const router = createBrowserRouter([
               { path: '/people', element: <PeoplePage /> },
               { path: '/timesheets', element: <TimesheetsPage /> },
               { path: '/reports', element: <ReportsPage /> },
-              { path: '/workspace/board', element: <WorkspaceBoardPage /> },
-              { path: '/workspace/backlog', element: <WorkspaceBacklogPage /> },
-              { path: '/workspace/sprints', element: <WorkspaceSprintsPage /> },
-              { path: '/workspace/epics', element: <WorkspaceEpicsPage /> },
-              { path: '/workspace/releases', element: <WorkspaceReleasesPage /> },
+              { path: '/planning/board', element: <PlanningBoardPage /> },
+              { path: '/planning/backlog', element: <PlanningBacklogPage /> },
+              { path: '/planning/sprints', element: <PlanningSprintsPage /> },
+              { path: '/planning/stories', element: <PlanningStoriesPage /> },
+              { path: '/planning/bugs', element: <PlanningBugsPage /> },
+              { path: '/planning/epics', element: <PlanningEpicsPage /> },
+              { path: '/planning/releases', element: <PlanningReleasesPage /> },
               { path: '/administration/users', element: <AdminUsersPage /> },
               { path: '/administration/roles', element: <AdminRolesPage /> },
               { path: '/administration/designations', element: <AdminDesignationsPage /> },

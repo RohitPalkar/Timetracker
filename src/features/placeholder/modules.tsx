@@ -1,4 +1,4 @@
-import { Bug, FolderKanban, Megaphone, ListTodo, Layers, Users as UsersIcon } from 'lucide-react'
+import { Bug, FolderKanban, Layers, ListTodo, Users as UsersIcon } from 'lucide-react'
 import { PlaceholderPage } from '@/features/placeholder/placeholder-page'
 
 export function PeoplePage() {
@@ -27,61 +27,6 @@ export function ReportsPage() {
       title="Reports"
       description="Sprint, budget, and delivery analytics."
       icon={Bug}
-    />
-  )
-}
-
-export function WorkspaceBoardPage() {
-  return (
-    <PlaceholderPage
-      title="Board"
-      description="Kanban board for the active sprint."
-      icon={Layers}
-      breadcrumb={[{ label: 'Workspace' }, { label: 'Board' }]}
-    />
-  )
-}
-
-export function WorkspaceBacklogPage() {
-  return (
-    <PlaceholderPage
-      title="Backlog"
-      description="Prioritize and refine the product backlog."
-      icon={ListTodo}
-      breadcrumb={[{ label: 'Workspace' }, { label: 'Backlog' }]}
-    />
-  )
-}
-
-export function WorkspaceSprintsPage() {
-  return (
-    <PlaceholderPage
-      title="Sprints"
-      description="Plan, start, and close sprints."
-      icon={Layers}
-      breadcrumb={[{ label: 'Workspace' }, { label: 'Sprints' }]}
-    />
-  )
-}
-
-export function WorkspaceEpicsPage() {
-  return (
-    <PlaceholderPage
-      title="Epics"
-      description="Group stories into large bodies of work."
-      icon={FolderKanban}
-      breadcrumb={[{ label: 'Workspace' }, { label: 'Epics' }]}
-    />
-  )
-}
-
-export function WorkspaceReleasesPage() {
-  return (
-    <PlaceholderPage
-      title="Releases"
-      description="Plan releases and version tags."
-      icon={Megaphone}
-      breadcrumb={[{ label: 'Workspace' }, { label: 'Releases' }]}
     />
   )
 }

@@ -16,9 +16,13 @@ export type {
   ProjectListItem,
   ProjectDetail,
 } from './project'
-export { storyService } from './story'
-export { bugService } from './bug'
-export { sprintService } from './sprint'
+export { epicRepository } from './epic'
+export type { EpicListParams } from './epic'
+export { storyRepository } from './story'
+export { bugRepository } from './bug'
+export { sprintRepository } from './sprint'
+export { releaseRepository } from './release'
+export type { ReleaseListParams } from './release'
 export { userService } from './user'
 export { notificationService } from './notification'
 export { dashboardService } from './dashboard'

@@ -9,7 +9,7 @@ export const DEMO_NOTIFICATIONS: AppNotification[] = [
     body: 'in CORE-104 "Empty state for board columns"',
     read: false,
     createdAt: daysAgo(0.08),
-    actionPath: '/workspace/board',
+    actionPath: '/planning/board',
     actorId: 'user-aditi',
   },
   {
@@ -19,7 +19,7 @@ export const DEMO_NOTIFICATIONS: AppNotification[] = [
     body: 'Rohit, "Project health scoring" is now assigned to you.',
     read: false,
     createdAt: daysAgo(0.2),
-    actionPath: '/workspace/backlog',
+    actionPath: '/planning/backlog',
     actorId: 'user-ravi',
   },
   {
@@ -39,7 +39,7 @@ export const DEMO_NOTIFICATIONS: AppNotification[] = [
     body: 'Sprint 14 · Core is now active with 28 points in scope.',
     read: true,
     createdAt: daysAgo(2),
-    actionPath: '/workspace/sprints',
+    actionPath: '/planning/sprints',
   },
   {
     id: 'ntf-5',
@@ -48,7 +48,7 @@ export const DEMO_NOTIFICATIONS: AppNotification[] = [
     body: 'Arjun: "Sizing looks good, export pipe handles 10k rows."',
     read: true,
     createdAt: daysAgo(3),
-    actionPath: '/workspace/backlog',
+    actionPath: '/planning/backlog',
     actorId: 'user-arjun',
   },
 ]

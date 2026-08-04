@@ -13,9 +13,9 @@ import { toast } from 'sonner'
 
 const CREATE_ACTIONS = [
   { label: 'New project', description: 'Create a project and team', icon: PackageOpen, to: '/projects/new' },
-  { label: 'New story', description: 'Add a story to the backlog', icon: Target, to: '/workspace/backlog' },
-  { label: 'New bug', description: 'Report an issue or defect', icon: KanbanSquare, to: '/workspace/board' },
-  { label: 'New sprint', description: 'Plan the next sprint', icon: Rocket, to: '/workspace/sprints' },
+  { label: 'New story', description: 'Add a story to the backlog', icon: Target, to: '/planning/backlog' },
+  { label: 'New bug', description: 'Report an issue or defect', icon: KanbanSquare, to: '/planning/board' },
+  { label: 'New sprint', description: 'Plan the next sprint', icon: Rocket, to: '/planning/sprints' },
 ]
 
 export function QuickCreate() {

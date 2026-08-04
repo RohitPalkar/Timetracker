@@ -47,7 +47,7 @@ function nextKey(projectId: string): string {
   return `${prefix}-${max + 1}`
 }
 
-export const storyService = {
+export const storyRepository = {
   async list(params?: StoryListParams): Promise<{ items: Story[]; total: number }> {
     await mockDelay(350)
     const result = storyStore.query({
