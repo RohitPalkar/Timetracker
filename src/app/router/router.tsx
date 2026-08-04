@@ -7,6 +7,8 @@ import { LoginPage } from '@/features/auth/login-page'
 import { VerifyPage } from '@/features/auth/verify-page'
 import { SessionPage } from '@/features/auth/session-page'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
+import { ProjectsListPage } from '@/features/projects/pages/projects-list-page'
+import { ProjectDetailPage } from '@/features/projects/pages/project-detail-page'
 import { NotFoundPage } from '@/features/not-found/not-found-page'
 import {
   AdminDesignationsPage,
@@ -14,7 +16,6 @@ import {
   AdminUsersPage,
   PeoplePage,
   ProfileSettingsPage,
-  ProjectsPage,
   ReportsPage,
   SettingsPage,
   TimesheetsPage,
@@ -51,7 +52,8 @@ export const router = createBrowserRouter([
             element: <DashboardLayout />,
             children: [
               { path: '/dashboard', element: <DashboardPage /> },
-              { path: '/projects', element: <ProjectsPage /> },
+              { path: '/projects', element: <ProjectsListPage /> },
+              { path: '/projects/:projectId', element: <ProjectDetailPage /> },
               { path: '/people', element: <PeoplePage /> },
               { path: '/timesheets', element: <TimesheetsPage /> },
               { path: '/reports', element: <ReportsPage /> },

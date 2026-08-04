@@ -7,6 +7,15 @@
 export { api, ApiError, IS_MOCK_MODE } from './http'
 export { authService } from './auth'
 export { projectService } from './project'
+export type {
+  CreateProjectInput,
+  UpdateProjectInput,
+  ProjectListParams,
+  AddMemberInput,
+  ProjectMemberRecord,
+  ProjectListItem,
+  ProjectDetail,
+} from './project'
 export { storyService } from './story'
 export { bugService } from './bug'
 export { sprintService } from './sprint'

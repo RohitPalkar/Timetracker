@@ -39,12 +39,14 @@ export interface Project {
   health: ProjectHealth
   progress: number
   ownerId: string
+  businessAnalystId?: string
   client?: string
   startDate: string
   endDate: string
   budget: number
   spent: number
   tags: string[]
+  updatedAt: string
 }
 
 export interface ProjectMember {
@@ -62,7 +64,20 @@ export type ProjectMemberRole =
   | 'developer'
   | 'qa'
   | 'designer'
+  | 'business_analyst'
   | 'consultant'
+
+export type ProjectActivityType = 'member' | 'milestone' | 'status' | 'budget' | 'settings' | 'comment'
+
+export interface ProjectActivity {
+  id: string
+  projectId: string
+  type: ProjectActivityType
+  actorId?: string
+  action: string
+  target?: string
+  createdAt: string
+}
 
 export interface Milestone {
   id: string

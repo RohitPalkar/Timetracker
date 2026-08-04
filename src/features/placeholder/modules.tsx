@@ -1,15 +1,5 @@
-import { FolderKanban, Bug, Megaphone, ListTodo, Layers, Users as UsersIcon } from 'lucide-react'
+import { Bug, FolderKanban, Megaphone, ListTodo, Layers, Users as UsersIcon } from 'lucide-react'
 import { PlaceholderPage } from '@/features/placeholder/placeholder-page'
-
-export function ProjectsPage() {
-  return (
-    <PlaceholderPage
-      title="Projects"
-      description="Create, manage, and health-score delivery projects."
-      icon={FolderKanban}
-    />
-  )
-}
 
 export function PeoplePage() {
   return (
