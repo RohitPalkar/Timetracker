@@ -1,11 +1,22 @@
+import * as React from 'react'
 import { Boxes, Bug, CalendarClock, Layers, ListChecks, SquareKanban, Target } from 'lucide-react'
+import { DataTable, type DataTableColumn } from '@/components/tables/data-table'
+import { ErrorState } from '@/components/feedback/error-state'
+import { formatRelative } from '@/lib/formats'
 import { usePlanning } from '@/store/planning'
 import { PlanningLayout } from '../planning-layout'
 import { EmptyPlanningState } from '../components/empty-planning-state'
+import { IssueTypeBadge } from '../components/issue-type-badge'
+import { StoryStatusBadge } from '../components/story-status-badge'
+import { PriorityBadge } from '../components/priority-badge'
+import { StoryPointsBadge } from '../components/story-points-badge'
+import { AssigneeAvatar } from '../components/assignee-avatar-group'
+import { usePlanningBacklog, usePlanningEpics, usePlanningUsers } from '../planning-queries'
+import type { Story } from '@/types/agile'
 
 const BREADCRUMB = [{ label: 'Planning' }]
 
-/** Shared demo status/priority filters to exercise the Planning filter bar. */
+/** Shared status/priority filter selects wired to the planning store. */
 function PlanningFilters() {
   const setFilter = usePlanning((state) => state.setFilter)
   const filters = usePlanning((state) => state.filters)
@@ -41,7 +52,139 @@ function PlanningFilters() {
   )
 }
 
+// ---------------------------------------------------------------------------
+// Backlog
+// ---------------------------------------------------------------------------
+
 export function PlanningBacklogPage() {
+  const projectId = usePlanning((s) => s.projectId)
+  const search = usePlanning((s) => s.search)
+  const filters = usePlanning((s) => s.filters)
+  const backlogQuery = usePlanningBacklog(projectId, { search, filters })
+  const epicsQuery = usePlanningEpics(projectId)
+  const usersQuery = usePlanningUsers()
+
+  const epicMap = React.useMemo(() => new Map((epicsQuery.data ?? []).map((e) => [e.id, e.name])), [epicsQuery.data])
+
+  const columns = React.useMemo<DataTableColumn<Story>[]>(
+    () => [
+      {
+        id: 'key',
+        header: 'Key',
+        cell: (row) => (
+          <span className="font-mono text-[12px] font-medium text-foreground">{row.key}</span>
+        ),
+        sortable: true,
+        sortValue: (row) => row.key,
+        searchValue: (row) => row.key,
+        className: 'w-24',
+        hideable: false,
+      },
+      {
+        id: 'type',
+        header: 'Type',
+        cell: (row) => <IssueTypeBadge type={row.storyType} />,
+        sortable: true,
+        sortValue: (row) => row.storyType,
+        className: 'w-20',
+      },
+      {
+        id: 'title',
+        header: 'Title',
+        cell: (row) => (
+          <div className="min-w-0">
+            <p className="truncate text-[13px] font-medium text-foreground">{row.title}</p>
+            {row.tags.length > 0 && (
+              <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                {row.tags.join(', ')}
+              </p>
+            )}
+          </div>
+        ),
+        sortable: true,
+        sortValue: (row) => row.title,
+        searchValue: (row) => [row.title, ...row.tags],
+        hideable: false,
+      },
+      {
+        id: 'status',
+        header: 'Status',
+        cell: (row) => <StoryStatusBadge status={row.status} />,
+        sortable: true,
+        sortValue: (row) => row.status,
+        className: 'w-28',
+      },
+      {
+        id: 'priority',
+        header: 'Priority',
+        cell: (row) => <PriorityBadge priority={row.priority} />,
+        sortable: true,
+        sortValue: (row) => row.priority,
+        className: 'w-24',
+      },
+      {
+        id: 'points',
+        header: 'Pts',
+        cell: (row) => <StoryPointsBadge points={row.points} />,
+        sortable: true,
+        sortValue: (row) => row.points,
+        align: 'center',
+        className: 'w-12',
+      },
+      {
+        id: 'epic',
+        header: 'Epic',
+        cell: (row) => {
+          const name = row.epicId ? epicMap.get(row.epicId) : null
+          return name ? (
+            <span className="truncate text-[13px] text-foreground">{name}</span>
+          ) : (
+            <span className="text-[13px] text-muted-foreground">—</span>
+          )
+        },
+        sortable: true,
+        sortValue: (row) => (row.epicId ? epicMap.get(row.epicId) ?? '' : ''),
+        searchValue: (row) => (row.epicId ? epicMap.get(row.epicId) : undefined),
+        className: 'w-36',
+      },
+      {
+        id: 'assignee',
+        header: 'Assignee',
+        cell: (row) => (
+          <span className="flex items-center gap-2">
+            <AssigneeAvatar userId={row.assigneeId} size="xs" />
+            <span className="text-[13px] text-foreground">
+              {usersQuery.data?.find((u) => u.id === row.assigneeId)?.name ?? '—'}
+            </span>
+          </span>
+        ),
+        sortable: true,
+        sortValue: (row) => {
+          const name = usersQuery.data?.find((u) => u.id === row.assigneeId)?.name
+          return name ?? ''
+        },
+        searchValue: (row) => usersQuery.data?.find((u) => u.id === row.assigneeId)?.name,
+        className: 'w-36',
+      },
+      {
+        id: 'updatedAt',
+        header: 'Updated',
+        cell: (row) => (
+          <span className="whitespace-nowrap text-[13px] text-muted-foreground">
+            {formatRelative(row.updatedAt)}
+          </span>
+        ),
+        sortable: true,
+        sortValue: (row) => row.updatedAt,
+        align: 'right',
+        className: 'w-24',
+      },
+    ],
+    [epicMap, usersQuery.data],
+  )
+
+  const projectIdSelected = Boolean(projectId)
+
   return (
     <PlanningLayout
       title="Backlog"
@@ -49,14 +192,53 @@ export function PlanningBacklogPage() {
       breadcrumb={[...BREADCRUMB, { label: 'Backlog' }]}
       filters={<PlanningFilters />}
     >
-      <EmptyPlanningState
-        icon={ListChecks}
-        title="Backlog is empty"
-        description="Backlog ships with the Stories module. Story creation, ordering, and sprint assignment land in the next phase."
-      />
+      {!projectIdSelected ? (
+        <EmptyPlanningState
+          icon={ListChecks}
+          title="Select a project"
+          description="Choose a project from the toolbar above to view its backlog."
+        />
+      ) : backlogQuery.isError ? (
+        <ErrorState
+          title="Could not load backlog"
+          description={backlogQuery.error instanceof Error ? backlogQuery.error.message : 'Something went wrong.'}
+          onRetry={() => backlogQuery.refetch()}
+        />
+      ) : (
+        <DataTable<Story>
+          data={backlogQuery.data?.items ?? []}
+          columns={columns}
+          keyField={(row) => row.id}
+          loading={backlogQuery.isLoading}
+          onRowClick={(row) => {
+            // Placeholder — story detail drawer lands in the Stories phase
+            window.location.href = `/planning/stories?selected=${row.key}`
+          }}
+          toolbar={{
+            actions: (
+              <span className="text-[13px] text-muted-foreground">
+                {backlogQuery.data?.total ?? 0} stories in backlog
+              </span>
+            ),
+          }}
+          pagination={{ pageSize: 15 }}
+          empty={{
+            icon: ListChecks,
+            title: 'Backlog is empty',
+            description:
+              filters.status || filters.priority
+                ? 'No stories match your current filters. Try adjusting or clearing them.'
+                : 'All stories have been assigned to sprints, or none have been created yet.',
+          }}
+        />
+      )}
     </PlanningLayout>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Placeholder pages (will be built in their respective phases)
+// ---------------------------------------------------------------------------
 
 export function PlanningBoardPage() {
   return (
@@ -69,7 +251,7 @@ export function PlanningBoardPage() {
       <EmptyPlanningState
         icon={SquareKanban}
         title="Board is empty"
-        description="The kanban board ships with the Sprints module. Column workflows and drag-and-drop land in the next phase."
+        description="The kanban board lands with the Sprints module. Column workflows and drag-and-drop come next."
       />
     </PlanningLayout>
   )

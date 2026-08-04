@@ -1,7 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
-import { epicRepository, releaseRepository, sprintRepository, userService } from '@/services'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { epicRepository, releaseRepository, sprintRepository, storyRepository, userService } from '@/services'
 import { projectService } from '@/services'
 import { MAX_LIST_PAGE_SIZE } from '@/constants'
+import type { PlanningFilters } from '@/store/planning'
 
 export const planningKeys = {
   all: ['planning'] as const,
@@ -9,6 +10,8 @@ export const planningKeys = {
   sprints: (projectId: string | null) => ['planning', 'sprints', projectId] as const,
   epics: (projectId: string | null) => ['planning', 'epics', projectId] as const,
   releases: (projectId: string | null) => ['planning', 'releases', projectId] as const,
+  stories: (projectId: string | null, extra?: Record<string, unknown>) =>
+    ['planning', 'stories', projectId, extra] as const,
   users: ['planning', 'users'] as const,
 }
 
@@ -66,4 +69,69 @@ export function usePlanningUsers() {
       return result.items
     },
   })
+}
+
+/** Backlog stories — stories not assigned to a sprint for the given project. */
+export function usePlanningBacklog(
+  projectId: string | null,
+  params?: { search?: string; filters?: PlanningFilters },
+) {
+  return useQuery({
+    queryKey: planningKeys.stories(projectId, { backlog: true, ...params }),
+    queryFn: () =>
+      storyRepository.list({
+        projectId: projectId ?? undefined,
+        backlogOnly: true,
+        search: params?.search,
+        filters: params?.filters as Record<string, string | undefined>,
+        sort: { field: 'updatedAt', direction: 'desc' },
+      }),
+    enabled: Boolean(projectId),
+  })
+}
+
+/** All stories for a project (board, list views). */
+export function usePlanningStories(
+  projectId: string | null,
+  params?: { sprintId?: string; search?: string; filters?: PlanningFilters },
+) {
+  return useQuery({
+    queryKey: planningKeys.stories(projectId, params ?? {}),
+    queryFn: () =>
+      storyRepository.list({
+        projectId: projectId ?? undefined,
+        sprintId: params?.sprintId,
+        search: params?.search,
+        filters: params?.filters as Record<string, string | undefined>,
+        sort: { field: 'updatedAt', direction: 'desc' },
+      }),
+    enabled: Boolean(projectId),
+  })
+}
+
+/** Story mutations with automatic cache invalidation. */
+export function useStoryMutations() {
+  const qc = useQueryClient()
+  const invalidate = () => qc.invalidateQueries({ queryKey: planningKeys.all })
+
+  const create = useMutation({
+    mutationFn: storyRepository.create,
+    onSuccess: invalidate,
+  })
+  const update = useMutation({
+    mutationFn: ({ id, input }: { id: string; input: Parameters<typeof storyRepository.update>[1] }) =>
+      storyRepository.update(id, input),
+    onSuccess: invalidate,
+  })
+  const move = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: Parameters<typeof storyRepository.move>[1] }) =>
+      storyRepository.move(id, status),
+    onSuccess: invalidate,
+  })
+  const remove = useMutation({
+    mutationFn: storyRepository.remove,
+    onSuccess: invalidate,
+  })
+
+  return { create, update, move, remove }
 }

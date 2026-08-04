@@ -30,6 +30,8 @@ export interface StoryListParams {
   projectId?: string
   sprintId?: string
   epicId?: string
+  /** When true, only return stories not assigned to a sprint (backlog). */
+  backlogOnly?: boolean
   pageParams?: PageParams
   filters?: QueryFilter
   sort?: SortSpec
@@ -54,6 +56,7 @@ export const storyRepository = {
       search: params?.search,
       searchFields: ['key', 'title', 'tags'],
       filters: { ...params?.filters, projectId: params?.projectId, sprintId: params?.sprintId, epicId: params?.epicId },
+      match: params?.backlogOnly ? (story) => !story.sprintId : undefined,
       sort: params?.sort ?? { field: 'updatedAt', direction: 'desc' },
       pageParams: params?.pageParams,
     })
