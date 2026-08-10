@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { Project } from '@/types'
+import type { Project, SubProject, Team } from '@/types'
 import type { ProjectMemberRecord } from '@/services'
 import type { DashboardPersona } from '@/types/dashboard'
 import type { ProjectCapability } from '@/config/project-config'
@@ -15,6 +15,10 @@ export interface ProjectWorkspaceContextValue {
   member: ProjectMemberRecord | null
   /** All project members (with resolved users). */
   members: ProjectMemberRecord[]
+  /** Sub Projects of this project (empty for simple projects). */
+  subProjects: SubProject[]
+  /** Delivery teams on this project. */
+  teams: Team[]
   persona: DashboardPersona
   actorId: string
   /** Centralized capability check for the current actor. */

@@ -15,7 +15,12 @@ export type {
   ProjectMemberRecord,
   ProjectListItem,
   ProjectDetail,
+  ProjectWorkspaceContext,
 } from './project'
+export { subProjectService } from './sub-project'
+export type { SubProjectMemberRecord, SubProjectDetail } from './sub-project'
+export { teamService } from './team'
+export type { TeamRecord } from './team'
 export { epicRepository } from './epic'
 export type { EpicListParams } from './epic'
 export { storyRepository } from './story'

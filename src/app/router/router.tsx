@@ -12,6 +12,8 @@ import { RequireProjectCreate } from '@/features/projects/components/require-pro
 import { ProjectWorkspacePage } from '@/features/projects/pages/project-workspace-page'
 import { ProjectWorkspaceOverviewPage } from '@/features/projects/pages/project-workspace-overview-page'
 import { ProjectWorkspacePlaceholderPage } from '@/features/projects/pages/project-workspace-placeholder-page'
+import { SubProjectWorkspacePage } from '@/features/projects/pages/sub-project-workspace-page'
+import { SubProjectWorkspacePlaceholderPage } from '@/features/projects/pages/sub-project-workspace-placeholder-page'
 import { NotFoundPage } from '@/features/not-found/not-found-page'
 import {
   AdministrationPage,
@@ -82,13 +84,32 @@ export const router = createBrowserRouter([
                 children: [
                   { index: true, element: <Navigate to="./overview" replace /> },
                   { path: 'overview', element: <ProjectWorkspaceOverviewPage /> },
+                  { path: 'backlog', element: <ProjectWorkspacePlaceholderPage navId="backlog" /> },
+                  { path: 'epics', element: <ProjectWorkspacePlaceholderPage navId="epics" /> },
+                  { path: 'sprints', element: <ProjectWorkspacePlaceholderPage navId="sprints" /> },
+                  { path: 'board', element: <ProjectWorkspacePlaceholderPage navId="board" /> },
+                  { path: 'releases', element: <ProjectWorkspacePlaceholderPage navId="releases" /> },
                   { path: 'sub-projects', element: <ProjectWorkspacePlaceholderPage navId="sub-projects" /> },
                   { path: 'teams', element: <ProjectWorkspacePlaceholderPage navId="teams" /> },
-                  { path: 'sprint-planning', element: <ProjectWorkspacePlaceholderPage navId="sprint-planning" /> },
-                  { path: 'board', element: <ProjectWorkspacePlaceholderPage navId="board" /> },
                   { path: 'reports', element: <ProjectWorkspacePlaceholderPage navId="reports" /> },
                   { path: 'files', element: <ProjectWorkspacePlaceholderPage navId="files" /> },
                   { path: 'settings', element: <ProjectWorkspacePlaceholderPage navId="settings" /> },
+                  {
+                    path: 'sub-projects/:subProjectId',
+                    element: <SubProjectWorkspacePage />,
+                    children: [
+                      { index: true, element: <Navigate to="./overview" replace /> },
+                      { path: 'overview', element: <SubProjectWorkspacePlaceholderPage navId="overview" /> },
+                      { path: 'backlog', element: <SubProjectWorkspacePlaceholderPage navId="backlog" /> },
+                      { path: 'epics', element: <SubProjectWorkspacePlaceholderPage navId="epics" /> },
+                      { path: 'sprints', element: <SubProjectWorkspacePlaceholderPage navId="sprints" /> },
+                      { path: 'board', element: <SubProjectWorkspacePlaceholderPage navId="board" /> },
+                      { path: 'releases', element: <SubProjectWorkspacePlaceholderPage navId="releases" /> },
+                      { path: 'team', element: <SubProjectWorkspacePlaceholderPage navId="team" /> },
+                      { path: 'reports', element: <SubProjectWorkspacePlaceholderPage navId="reports" /> },
+                      { path: 'settings', element: <SubProjectWorkspacePlaceholderPage navId="settings" /> },
+                    ],
+                  },
                 ],
               },
 

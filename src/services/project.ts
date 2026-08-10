@@ -3,9 +3,9 @@
  * Backed by the in-memory mock store; the same interface will be reimplemented
  * against a REST API in the integration phase without touching feature code.
  */
-import type { Milestone, Project, ProjectActivity, ProjectMember, ProjectMemberRole, ProjectScope, ProjectStatus, ProjectType, User } from '@/types'
+import type { Milestone, Project, ProjectActivity, ProjectMember, ProjectMemberRole, ProjectScope, ProjectStatus, ProjectType, SubProject, Team, User } from '@/types'
 import type { PageParams, SortSpec } from '@/types/api'
-import { projectActivityStore, projectMemberStore, projectStore, milestoneStore, userStore } from './stores'
+import { projectActivityStore, projectMemberStore, projectStore, milestoneStore, subProjectStore, teamStore, userStore } from './stores'
 import { ApiError, mockDelay } from './http'
 import { projectMemberKey } from '@/mocks/data'
 import { uid } from '@/lib/utils'
@@ -77,6 +77,12 @@ export interface ProjectDetail {
   members: ProjectMemberRecord[]
   milestones: Milestone[]
   activity: ProjectActivity[]
+}
+
+/** Workspace read model — project plus sub-project structure and teams. */
+export interface ProjectWorkspaceContext extends ProjectDetail {
+  subProjects: SubProject[]
+  teams: Team[]
 }
 
 function resolveUser(userId: string | undefined): User | undefined {
@@ -264,7 +270,7 @@ export const projectService = {
   async getWorkspaceContext(
     projectId: string,
     actor: { userId: string; scope: ProjectScope },
-  ): Promise<ProjectDetail & { member: ProjectMemberRecord | null }> {
+  ): Promise<ProjectWorkspaceContext & { member: ProjectMemberRecord | null }> {
     await mockDelay(260)
     const project = projectStore.get(projectId)
     if (!project) throw new ApiError('This project does not exist.', 404, 'PROJECT_NOT_FOUND')
@@ -282,6 +288,8 @@ export const projectService = {
       activity: projectActivityStore
         .query({ filters: { projectId } })
         .items.sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+      subProjects: subProjectStore.query({ filters: { projectId }, sort: { field: 'name', direction: 'asc' } }).items,
+      teams: teamStore.query({ filters: { projectId }, sort: { field: 'name', direction: 'asc' } }).items,
     }
   },
 
@@ -431,5 +439,15 @@ export const projectService = {
     return projectActivityStore
       .query({ filters: { projectId } })
       .items.sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  },
+
+  async getSubProjects(projectId: string): Promise<SubProject[]> {
+    await mockDelay(200)
+    return subProjectStore.query({ filters: { projectId }, sort: { field: 'name', direction: 'asc' } }).items
+  },
+
+  async getTeams(projectId: string): Promise<Team[]> {
+    await mockDelay(200)
+    return teamStore.query({ filters: { projectId }, sort: { field: 'name', direction: 'asc' } }).items
   },
 }

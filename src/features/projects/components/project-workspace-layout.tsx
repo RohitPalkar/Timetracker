@@ -9,7 +9,7 @@ import { ProjectFormDrawer } from './project-form-drawer'
 import { useProjectWorkspace } from './project-workspace-context'
 import { useProjectMutations, useUserDirectory } from '../project-queries'
 import { rosterMemberIds } from '../project-form-utils'
-import { findWorkspaceNavItem, getVisibleWorkspaceNav } from '@/config/project-workspace-navigation'
+import { findWorkspaceNavItem, getVisibleWorkspaceNav, workspaceStructure } from '@/config/project-workspace-navigation'
 
 /**
  * Project Workspace shell (LEVEL 2 navigation). Provides the shared project
@@ -30,7 +30,11 @@ export function ProjectWorkspaceLayout({ children }: { children: React.ReactNode
     [users, project.ownerId],
   )
 
-  const activeItem = findWorkspaceNavItem(project.id, pathname, getVisibleWorkspaceNav(can))
+  const activeItem = findWorkspaceNavItem(
+    project.id,
+    pathname,
+    getVisibleWorkspaceNav(can, workspaceStructure(project.hasSubProjects)),
+  )
 
   const handleArchive = () => {
     mutations.archive.mutate(project.id, {

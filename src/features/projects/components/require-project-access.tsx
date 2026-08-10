@@ -55,6 +55,8 @@ export function RequireProjectAccess({ children }: { children: React.ReactNode }
     project: query.data.project,
     member: query.data.member,
     members: query.data.members,
+    subProjects: query.data.subProjects,
+    teams: query.data.teams,
     persona,
     actorId: DEMO_ACTOR_BY_PERSONA[persona],
     can,

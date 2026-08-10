@@ -46,18 +46,36 @@ export function useEligibleProjectManagers(): { managers: User[]; isLoading: boo
 }
 
 /**
+ * Resolve the current actor (persona → seeded demo actor) the same way the
+ * Projects List does. Services enforce scope from `scope` + `actorId`, so the
+ * UI can never widen its own data scope.
+ */
+export function useProjectActor() {
+  const { authUser } = useAuth()
+  const persona = personaForRole(authUser?.roleId)
+  const config = getProjectConfig(persona)
+  return { persona, actorId: DEMO_ACTOR_BY_PERSONA[persona], scope: config.scope }
+}
+
+/**
  * Access-aware Project Workspace context. Resolves the actor the same way the
  * Projects List does (persona → seeded demo actor) and lets the service
  * enforce scope — 404 / 403 are surfaced as ApiError statuses.
  */
 export function useWorkspaceContext(projectId: string | undefined) {
-  const { authUser } = useAuth()
-  const persona = personaForRole(authUser?.roleId)
-  const config = getProjectConfig(persona)
-  const actor = { userId: DEMO_ACTOR_BY_PERSONA[persona], scope: config.scope }
+  const actor = useProjectActor()
   return useQuery({
     queryKey: [...projectKeys.all, 'workspace', projectId ?? 'none'],
-    queryFn: () => projectService.getWorkspaceContext(projectId as string, actor),
+    queryFn: () => projectService.getWorkspaceContext(projectId as string, { userId: actor.actorId, scope: actor.scope }),
+    enabled: Boolean(projectId),
+  })
+}
+
+/** Delivery teams on a project (used by the Teams screen and structure-aware nav). */
+export function useProjectTeams(projectId: string | undefined) {
+  return useQuery({
+    queryKey: [...projectKeys.all, 'teams', projectId ?? 'none'],
+    queryFn: () => projectService.getTeams(projectId as string),
     enabled: Boolean(projectId),
   })
 }

@@ -17,6 +17,7 @@ export type ProjectCapability =
   | 'projects.delete'
   | 'projects.subprojects.view'
   | 'projects.teams.view'
+  | 'projects.managers.edit'
   | 'planning.view'
   | 'board.view'
   | 'reports.project.view'
@@ -71,6 +72,7 @@ export const PROJECT_PERSONAS: Record<DashboardPersona, ProjectPersonaConfig> = 
       'projects.delete',
       'projects.subprojects.view',
       'projects.teams.view',
+      'projects.managers.edit',
       'planning.view',
       'board.view',
       'reports.project.view',
@@ -91,6 +93,7 @@ export const PROJECT_PERSONAS: Record<DashboardPersona, ProjectPersonaConfig> = 
       'projects.edit',
       'projects.subprojects.view',
       'projects.teams.view',
+      'projects.managers.edit',
       'planning.view',
       'board.view',
       'reports.project.view',
