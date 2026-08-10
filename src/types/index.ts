@@ -49,6 +49,9 @@ export interface Project {
   progress: number
   /** Project category in the new MyTracker model (platform/product/client delivery/etc.). */
   type?: ProjectType
+  /** Multiple project managers — replaces single ownerId for manager relationships. */
+  managerIds: string[]
+  /** @deprecated Use managerIds instead. Kept for backward compatibility with existing code. */
   ownerId: string
   businessAnalystId?: string
   client?: string
@@ -58,14 +61,64 @@ export interface Project {
   spent: number
   tags: string[]
   updatedAt: string
+  /** Whether this project has Sub Projects. Determines workspace navigation mode. */
+  hasSubProjects: boolean
 }
 
-export interface ProjectMember {
+export interface SubProject {
+  id: string
   projectId: string
+  key: string
+  name: string
+  description: string
+  status: ProjectStatus
+  health: ProjectHealth
+  progress: number
+  /** Owners/managers of this Sub Project. */
+  ownerIds: string[]
+  businessAnalystId?: string
+  startDate: string
+  endDate: string
+  budget: number
+  spent: number
+  tags: string[]
+  updatedAt: string
+}
+
+export interface Team {
+  id: string
+  projectId: string
+  name: string
+  description: string
+  /** Type of team for filtering/grouping. */
+  type: 'development' | 'qa' | 'design' | 'business_analysis' | 'devops' | 'cross_functional'
+  /** Members of this team (user IDs). */
+  memberIds: string[]
+  /** Sub Projects this team is assigned to (empty = project-wide). */
+  subProjectIds: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+/**
+ * Project Membership — the core relationship model.
+ * A user can have multiple memberships in the same project with different roles/contexts.
+ */
+export interface ProjectMembership {
+  id: string
   userId: string
+  projectId: string
+  /** Optional: membership scoped to a Sub Project. */
+  subProjectId?: string
+  /** Optional: team membership. */
+  teamId?: string
+  /** Role in this context. */
   role: ProjectMemberRole
   capacity: number
-  joinedAt: string
+  /** When this membership started. */
+  startedAt: string
+  /** When this membership ended (if applicable). */
+  endedAt?: string
 }
 
 export type ProjectMemberRole =
@@ -77,6 +130,18 @@ export type ProjectMemberRole =
   | 'designer'
   | 'business_analyst'
   | 'consultant'
+
+/**
+ * Legacy ProjectMember — kept for backward compatibility.
+ * @deprecated Use ProjectMembership instead.
+ */
+export interface ProjectMember {
+  projectId: string
+  userId: string
+  role: ProjectMemberRole
+  capacity: number
+  joinedAt: string
+}
 
 export type ProjectActivityType = 'member' | 'milestone' | 'status' | 'budget' | 'settings' | 'comment'
 

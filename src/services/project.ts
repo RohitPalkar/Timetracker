@@ -304,6 +304,7 @@ export const projectService = {
       type: input.type,
       progress: 0,
       ownerId: input.ownerId,
+      managerIds: input.ownerId ? [input.ownerId] : [],
       businessAnalystId: input.businessAnalystId,
       client: input.client || undefined,
       startDate: input.startDate,
@@ -312,6 +313,7 @@ export const projectService = {
       spent: 0,
       tags: [],
       updatedAt: now,
+      hasSubProjects: false,
     })
     await syncMembers(project.id, input)
     projectActivityStore.create({
