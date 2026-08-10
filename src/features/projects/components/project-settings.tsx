@@ -82,6 +82,7 @@ export function ProjectSettings({ project, members, users, onDeleted }: ProjectS
                     name: values.name,
                     key: values.key === '' ? undefined : values.key,
                     client: values.client === '' ? undefined : values.client,
+                    type: values.type,
                     description: values.description,
                     ownerId: values.ownerId,
                     businessAnalystId: values.businessAnalystId === '' ? undefined : values.businessAnalystId,

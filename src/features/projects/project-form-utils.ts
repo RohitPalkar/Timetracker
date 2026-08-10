@@ -7,6 +7,7 @@ export function projectToFormValues(project: Project, memberUserIds: string[]): 
     name: project.name,
     key: project.key,
     client: project.client ?? '',
+    type: project.type ?? 'platform',
     description: project.description,
     ownerId: project.ownerId,
     businessAnalystId: project.businessAnalystId ?? '',

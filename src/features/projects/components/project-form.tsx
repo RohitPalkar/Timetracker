@@ -8,11 +8,13 @@ import { DateField } from '@/components/forms/date-field'
 import { MultiSelectField } from '@/components/forms/multi-select-field'
 import { Separator } from '@/components/ui/separator'
 import type { User } from '@/types'
-import { PROJECT_STATUS_OPTIONS, projectFormSchema, type ProjectFormDefaultValues, type ProjectFormValues } from '../project-form-schema'
+import { PROJECT_STATUS_OPTIONS, PROJECT_TYPE_OPTIONS, projectFormSchema, type ProjectFormDefaultValues, type ProjectFormValues } from '../project-form-schema'
 
 export interface ProjectFormProps {
   defaultValues: ProjectFormDefaultValues
   users: User[]
+  /** Users who may act as project manager — falls back to `users` when omitted. */
+  eligibleManagers?: User[]
   submitLabel: string
   submitting?: boolean
   /** Called on cancel; the form is always reset to defaultValues. */
@@ -26,7 +28,7 @@ const userOptions = (users: User[]) => users.map((user) => ({ value: user.id, la
  * Shared create/edit form — rendered inside the New/Edit project drawer
  * and inside the Settings tab. Never duplicated.
  */
-export function ProjectForm({ defaultValues, users, submitLabel, submitting, onCancel, onSubmit }: ProjectFormProps) {
+export function ProjectForm({ defaultValues, users, eligibleManagers, submitLabel, submitting, onCancel, onSubmit }: ProjectFormProps) {
   const form = useForm<ProjectFormValues>({
     resolver: standardSchemaResolver(projectFormSchema) as unknown as Resolver<ProjectFormValues>,
     defaultValues,
@@ -53,22 +55,31 @@ export function ProjectForm({ defaultValues, users, submitLabel, submitting, onC
           control={form.control}
           name="key"
           label="Project code"
-          description="Unique shorthand shown on tickets."
+          description="Unique charge code; doubles as the board key prefix on tickets."
           placeholder="e.g. PORTAL"
+          required
         />
+        <SelectField
+          control={form.control}
+          name="type"
+          label="Project type"
+          description="Category in the MyTracker project model."
+          options={PROJECT_TYPE_OPTIONS}
+          placeholder="Select a type…"
+        />
+        <TextField control={form.control} name="client" label="Client" placeholder="e.g. Orbit Retail" />
         <SelectField
           control={form.control}
           name="status"
           label="Status"
           options={PROJECT_STATUS_OPTIONS}
         />
-        <TextField control={form.control} name="client" label="Client" placeholder="e.g. Orbit Retail" />
         <SelectField
           control={form.control}
           name="ownerId"
           label="Project manager"
           required
-          options={userOptions(users)}
+          options={userOptions(eligibleManagers ?? users)}
           placeholder="Select a manager…"
         />
         <SelectField
@@ -85,9 +96,16 @@ export function ProjectForm({ defaultValues, users, submitLabel, submitting, onC
           type="number"
           placeholder="0"
           leftSlot={<span className="text-xs font-medium text-muted-foreground">$</span>}
+          required
         />
         <DateField control={form.control} name="startDate" label="Start date" required />
-        <DateField control={form.control} name="endDate" label="End date" required />
+        <DateField
+          control={form.control}
+          name="endDate"
+          label="End date"
+          description="Optional — defaults to 90 days after the start date."
+          className="sm:col-span-2"
+        />
       </div>
 
       <TextareaField

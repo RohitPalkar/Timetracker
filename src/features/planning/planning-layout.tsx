@@ -4,9 +4,8 @@ import { PageLayout } from '@/components/common/page-layout'
 import { SearchBox } from '@/components/common/search-box'
 import { QuickCreate } from '@/components/common/quick-create'
 import { cn } from '@/lib/utils'
-import { usePlanning, type PlanningView } from '@/store/planning'
+import { useWorkspace, type WorkspaceView } from '@/store/workspace'
 import { PlanningHeader } from './components/planning-header'
-import { ProjectSelector } from './components/project-selector'
 import { SprintSelector } from './components/sprint-selector'
 import { FilterBar } from './components/filter-bar'
 
@@ -22,7 +21,7 @@ export interface PlanningLayoutProps {
   className?: string
 }
 
-const VIEW_OPTIONS: Array<{ value: PlanningView; label: string; icon: React.ComponentType<{ className?: string }> }> = [
+const VIEW_OPTIONS: Array<{ value: WorkspaceView; label: string; icon: React.ComponentType<{ className?: string }> }> = [
   { value: 'board', label: 'Board', icon: SquareKanban },
   { value: 'list', label: 'List', icon: List },
   { value: 'calendar', label: 'Calendar', icon: CalendarDays },
@@ -41,12 +40,12 @@ export function PlanningLayout({
   children,
   className,
 }: PlanningLayoutProps) {
-  const search = usePlanning((state) => state.search)
-  const setSearch = usePlanning((state) => state.setSearch)
-  const view = usePlanning((state) => state.view)
-  const setView = usePlanning((state) => state.setView)
-  const hasActiveFilters = usePlanning((state) => Object.values(state.filters).some(Boolean))
-  const clearFilters = usePlanning((state) => state.clearFilters)
+  const search = useWorkspace((state) => state.search)
+  const setSearch = useWorkspace((state) => state.setSearch)
+  const view = useWorkspace((state) => state.view)
+  const setView = useWorkspace((state) => state.setView)
+  const hasActiveFilters = useWorkspace((state) => Object.values(state.filters).some(Boolean))
+  const clearFilters = useWorkspace((state) => state.clearFilters)
 
   return (
     <PageLayout
@@ -54,10 +53,9 @@ export function PlanningLayout({
       className={className}
     >
       <div className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-3 shadow-xs">
-        <div className="flex flex-wrap items-center gap-2">
-          <ProjectSelector className="w-52" />
-          <SprintSelector className="w-48" />
-          <div className="min-w-40 flex-1 sm:max-w-xs">
+<div className="flex flex-wrap items-center gap-2">
+        <SprintSelector className="w-48" />
+        <div className="min-w-40 flex-1 sm:max-w-xs">
             <SearchBox
               value={search}
               onValueChange={setSearch}

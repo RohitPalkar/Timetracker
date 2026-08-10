@@ -1,6 +1,28 @@
 import * as React from 'react'
 import { useNavigate } from 'react-router'
-import { Layers, LayoutDashboard, Settings, Users } from 'lucide-react'
+import {
+  BarChart3,
+  Bell,
+  Bot,
+  BookOpen,
+  Building2,
+  CalendarDays,
+  ClipboardCheck,
+  ClipboardList,
+  Cog,
+  FileText,
+  FolderKanban,
+  History,
+  LayoutDashboard,
+  Lock,
+  Settings,
+  Shield,
+  Sparkles,
+  ThumbsUp,
+  UserCog,
+  Users,
+  Zap,
+} from 'lucide-react'
 import {
   CommandDialog,
   CommandEmpty,
@@ -11,13 +33,32 @@ import {
   CommandSeparator,
 } from '@/components/ui/command'
 import { useCommandPalette } from '@/store/command-palette'
-import { NAV_GROUPS } from '@/config/navigation'
 
 const PAGES = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
-  { label: 'Projects', to: '/projects', icon: Layers },
-  { label: 'People', to: '/people', icon: Users },
+  { label: 'Projects', to: '/projects', icon: FolderKanban },
+  { label: 'Employees', to: '/employees', icon: Users },
+  { label: 'Teams', to: '/teams', icon: Users },
+  { label: 'Departments', to: '/departments', icon: Building2 },
+  { label: 'Roles', to: '/roles', icon: Shield },
+  { label: 'Permissions', to: '/permissions', icon: Lock },
+  { label: 'My Timesheet', to: '/timesheets/my', icon: ClipboardList },
+  { label: 'Team Timesheets', to: '/timesheets/team', icon: Users },
+  { label: 'Approvals', to: '/timesheets/approvals', icon: ClipboardCheck },
+  { label: 'Calendar', to: '/timesheets/calendar', icon: CalendarDays },
+  { label: 'Timesheet Reports', to: '/timesheets/reports', icon: BarChart3 },
+  { label: 'AI Agents', to: '/ai/agents', icon: Bot },
+  { label: 'AI Usage', to: '/ai/usage', icon: Zap },
+  { label: 'Prompt Library', to: '/ai/prompts', icon: Sparkles },
+  { label: 'Knowledge Base', to: '/ai/knowledge', icon: BookOpen },
+  { label: 'AI History', to: '/ai/history', icon: History },
+  { label: 'Reports & Analytics', to: '/reports', icon: BarChart3 },
+  { label: 'Survey', to: '/survey', icon: ThumbsUp },
+  { label: 'Documents', to: '/documents', icon: FileText },
+  { label: 'Notifications', to: '/notifications', icon: Bell },
+  { label: 'Administration', to: '/admin', icon: Cog },
   { label: 'Settings', to: '/settings', icon: Settings },
+  { label: 'Profile', to: '/settings/profile', icon: UserCog },
 ]
 
 export function CommandPalette() {
@@ -37,7 +78,7 @@ export function CommandPalette() {
 
   return (
     <CommandDialog open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder="Search pages, stories, projects…" />
+      <CommandInput placeholder="Search pages, projects…" />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
         <CommandGroup heading="Pages">
@@ -56,22 +97,17 @@ export function CommandPalette() {
           ))}
         </CommandGroup>
         <CommandSeparator />
-        <CommandGroup heading="Workspace">
-          {NAV_GROUPS.filter((group) => group.label === 'Workspace')
-            .flatMap((group) => group.items)
-            .map((item) => (
-              <CommandItem
-                key={item.to}
-                value={item.label}
-                onSelect={() => {
-                  setOpen(false)
-                  navigate(item.to)
-                }}
-              >
-                <item.icon className="size-4 text-muted-foreground" aria-hidden="true" />
-                {item.label}
-              </CommandItem>
-            ))}
+        <CommandGroup heading="Quick Actions">
+          <CommandItem
+            value="New project"
+            onSelect={() => {
+              setOpen(false)
+              navigate('/projects/new')
+            }}
+          >
+            <FolderKanban className="size-4 text-muted-foreground" aria-hidden="true" />
+            New project
+          </CommandItem>
         </CommandGroup>
       </CommandList>
     </CommandDialog>

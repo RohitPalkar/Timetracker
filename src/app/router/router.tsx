@@ -8,27 +8,35 @@ import { VerifyPage } from '@/features/auth/verify-page'
 import { SessionPage } from '@/features/auth/session-page'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
 import { ProjectsListPage } from '@/features/projects/pages/projects-list-page'
-import { ProjectDetailPage } from '@/features/projects/pages/project-detail-page'
+import { RequireProjectCreate } from '@/features/projects/components/require-project-create'
+import { ProjectWorkspacePage } from '@/features/projects/pages/project-workspace-page'
+import { ProjectWorkspaceOverviewPage } from '@/features/projects/pages/project-workspace-overview-page'
+import { ProjectWorkspacePlaceholderPage } from '@/features/projects/pages/project-workspace-placeholder-page'
 import { NotFoundPage } from '@/features/not-found/not-found-page'
 import {
-  AdminDesignationsPage,
-  AdminRolesPage,
-  AdminUsersPage,
-  PeoplePage,
+  AdministrationPage,
+  AIAgentsPage,
+  AIHistoryPage,
+  AIKnowledgePage,
+  AIPromptsPage,
+  AIUsagePage,
+  DepartmentsPage,
+  DocumentsPage,
+  EmployeesPage,
+  MyTimesheetPage,
+  NotificationsPage,
   ProfileSettingsPage,
+  PermissionsPage,
   ReportsPage,
+  RolesPage,
   SettingsPage,
-  TimesheetsPage,
+  SurveyPage,
+  TeamsPage,
+  TeamTimesheetsPage,
+  TimesheetApprovalsPage,
+  TimesheetCalendarPage,
+  TimesheetReportsPage,
 } from '@/features/placeholder/modules'
-import {
-  PlanningBacklogPage,
-  PlanningBoardPage,
-  PlanningBugsPage,
-  PlanningEpicsPage,
-  PlanningReleasesPage,
-  PlanningSprintsPage,
-  PlanningStoriesPage,
-} from '@/features/planning/pages/planning-pages'
 
 export const router = createBrowserRouter([
   {
@@ -55,22 +63,64 @@ export const router = createBrowserRouter([
           {
             element: <DashboardLayout />,
             children: [
+              // ── Overview ───────────────────────────────
               { path: '/dashboard', element: <DashboardPage /> },
+
+              // ── Project Management ────────────────────
               { path: '/projects', element: <ProjectsListPage /> },
-              { path: '/projects/:projectId', element: <ProjectDetailPage /> },
-              { path: '/people', element: <PeoplePage /> },
-              { path: '/timesheets', element: <TimesheetsPage /> },
+              {
+                path: '/projects/new',
+                element: (
+                  <RequireProjectCreate>
+                    <ProjectsListPage />
+                  </RequireProjectCreate>
+                ),
+              },
+              {
+                path: '/projects/:projectId',
+                element: <ProjectWorkspacePage />,
+                children: [
+                  { index: true, element: <Navigate to="./overview" replace /> },
+                  { path: 'overview', element: <ProjectWorkspaceOverviewPage /> },
+                  { path: 'sub-projects', element: <ProjectWorkspacePlaceholderPage navId="sub-projects" /> },
+                  { path: 'teams', element: <ProjectWorkspacePlaceholderPage navId="teams" /> },
+                  { path: 'sprint-planning', element: <ProjectWorkspacePlaceholderPage navId="sprint-planning" /> },
+                  { path: 'board', element: <ProjectWorkspacePlaceholderPage navId="board" /> },
+                  { path: 'reports', element: <ProjectWorkspacePlaceholderPage navId="reports" /> },
+                  { path: 'files', element: <ProjectWorkspacePlaceholderPage navId="files" /> },
+                  { path: 'settings', element: <ProjectWorkspacePlaceholderPage navId="settings" /> },
+                ],
+              },
+
+              // ── User & Organization ───────────────────
+              { path: '/employees', element: <EmployeesPage /> },
+              { path: '/teams', element: <TeamsPage /> },
+              { path: '/departments', element: <DepartmentsPage /> },
+              { path: '/roles', element: <RolesPage /> },
+              { path: '/permissions', element: <PermissionsPage /> },
+
+              // ── Timesheet Management ──────────────────
+              { path: '/timesheets/my', element: <MyTimesheetPage /> },
+              { path: '/timesheets/team', element: <TeamTimesheetsPage /> },
+              { path: '/timesheets/approvals', element: <TimesheetApprovalsPage /> },
+              { path: '/timesheets/calendar', element: <TimesheetCalendarPage /> },
+              { path: '/timesheets/reports', element: <TimesheetReportsPage /> },
+
+              // ── AI Workspace ──────────────────────────
+              { path: '/ai/agents', element: <AIAgentsPage /> },
+              { path: '/ai/usage', element: <AIUsagePage /> },
+              { path: '/ai/prompts', element: <AIPromptsPage /> },
+              { path: '/ai/knowledge', element: <AIKnowledgePage /> },
+              { path: '/ai/history', element: <AIHistoryPage /> },
+
+              // ── Workspace ─────────────────────────────
               { path: '/reports', element: <ReportsPage /> },
-              { path: '/planning/board', element: <PlanningBoardPage /> },
-              { path: '/planning/backlog', element: <PlanningBacklogPage /> },
-              { path: '/planning/sprints', element: <PlanningSprintsPage /> },
-              { path: '/planning/stories', element: <PlanningStoriesPage /> },
-              { path: '/planning/bugs', element: <PlanningBugsPage /> },
-              { path: '/planning/epics', element: <PlanningEpicsPage /> },
-              { path: '/planning/releases', element: <PlanningReleasesPage /> },
-              { path: '/administration/users', element: <AdminUsersPage /> },
-              { path: '/administration/roles', element: <AdminRolesPage /> },
-              { path: '/administration/designations', element: <AdminDesignationsPage /> },
+              { path: '/survey', element: <SurveyPage /> },
+              { path: '/documents', element: <DocumentsPage /> },
+              { path: '/notifications', element: <NotificationsPage /> },
+
+              // ── System ────────────────────────────────
+              { path: '/admin', element: <AdministrationPage /> },
               { path: '/settings', element: <SettingsPage /> },
               { path: '/settings/profile', element: <ProfileSettingsPage /> },
             ],

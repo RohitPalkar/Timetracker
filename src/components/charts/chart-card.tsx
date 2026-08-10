@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
 export interface ChartLegendItem {
@@ -15,6 +16,7 @@ export interface ChartCardProps {
   legend?: ChartLegendItem[]
   className?: string
   contentClassName?: string
+  loading?: boolean
   children: React.ReactNode
 }
 
@@ -25,6 +27,7 @@ export function ChartCard({
   legend,
   className,
   contentClassName,
+  loading,
   children,
 }: ChartCardProps) {
   return (
@@ -51,8 +54,23 @@ export function ChartCard({
           )}
         </CardHeader>
       )}
-      <CardContent className={cn('min-w-0 flex-1', contentClassName)}>{children}</CardContent>
+      <CardContent className={cn('min-w-0 flex-1', contentClassName)}>
+        {loading ? <ChartCardSkeleton /> : children}
+      </CardContent>
     </Card>
+  )
+}
+
+export function ChartCardSkeleton() {
+  return (
+    <div className="flex h-[280px] w-full flex-col justify-end gap-3">
+      <div className="flex flex-1 items-end gap-2">
+        {Array.from({ length: 8 }).map((_, index) => (
+          <Skeleton key={index} className="flex-1 rounded-t-md" style={{ height: `${20 + ((index * 37) % 70)}%` }} />
+        ))}
+      </div>
+      <Skeleton className="h-3 w-full" />
+    </div>
   )
 }
 

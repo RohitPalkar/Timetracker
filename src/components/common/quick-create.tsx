@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { KanbanSquare, PackageOpen, Plus, Rocket, Target } from 'lucide-react'
+import { FolderKanban, Plus } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,10 +12,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
 const CREATE_ACTIONS = [
-  { label: 'New project', description: 'Create a project and team', icon: PackageOpen, to: '/projects/new' },
-  { label: 'New story', description: 'Add a story to the backlog', icon: Target, to: '/planning/backlog' },
-  { label: 'New bug', description: 'Report an issue or defect', icon: KanbanSquare, to: '/planning/board' },
-  { label: 'New sprint', description: 'Plan the next sprint', icon: Rocket, to: '/planning/sprints' },
+  { label: 'New project', description: 'Create a project and team', icon: FolderKanban, to: '/projects/new' },
 ]
 
 export function QuickCreate() {

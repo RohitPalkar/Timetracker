@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router'
 import { Drawer } from '@/components/common/drawer'
 import { toast } from 'sonner'
 import { ProjectForm } from './project-form'
-import { useProjectMutations } from '../project-queries'
+import { useEligibleProjectManagers, useProjectMutations } from '../project-queries'
 import { projectToFormValues } from '../project-form-utils'
+import { today } from '@/lib/dates'
 import type { Project, User } from '@/types'
 import type { ProjectFormValues } from '../project-form-schema'
 
@@ -18,9 +20,11 @@ export interface ProjectFormDrawerProps {
 
 const errorMessage = (error: unknown): string => (error instanceof Error ? error.message : 'Something went wrong.')
 
-/** Create / Edit project drawer — one component, two modes, no navigation. */
+/** Create / Edit project drawer — create navigates to the new workspace; edit stays put. */
 export function ProjectFormDrawer({ open, onOpenChange, project, memberUserIds, users }: ProjectFormDrawerProps) {
+  const navigate = useNavigate()
   const mutations = useProjectMutations()
+  const eligibleManagers = useEligibleProjectManagers()
   const isEdit = Boolean(project)
   const submitting = mutations.create.isPending || mutations.update.isPending
 
@@ -29,8 +33,9 @@ export function ProjectFormDrawer({ open, onOpenChange, project, memberUserIds, 
   const handleSubmit = (values: ProjectFormValues) => {
     const input = {
       name: values.name,
-      key: values.key === '' ? undefined : values.key,
+      key: values.key,
       client: values.client === '' ? undefined : values.client,
+      type: values.type,
       description: values.description,
       ownerId: values.ownerId,
       businessAnalystId: values.businessAnalystId === '' ? undefined : values.businessAnalystId,
@@ -57,6 +62,7 @@ export function ProjectFormDrawer({ open, onOpenChange, project, memberUserIds, 
         onSuccess: (created) => {
           toast.success(`Project "${created.name}" created`)
           close()
+          navigate(`/projects/${created.id}`)
         },
         onError: (error) => toast.error(errorMessage(error)),
       })
@@ -78,9 +84,12 @@ export function ProjectFormDrawer({ open, onOpenChange, project, memberUserIds, 
       <ProjectForm
         key={project?.id ?? 'new'}
         defaultValues={
-          project ? projectToFormValues(project, memberUserIds ?? []) : { status: 'planned', teamMemberIds: [], budget: 0 }
+          project
+            ? projectToFormValues(project, memberUserIds ?? [])
+            : { status: 'planned', type: 'platform', teamMemberIds: [], budget: 0, startDate: today() }
         }
         users={users}
+        eligibleManagers={eligibleManagers.managers}
         submitLabel={isEdit ? 'Save changes' : 'Create project'}
         submitting={submitting}
         onCancel={close}

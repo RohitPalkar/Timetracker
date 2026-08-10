@@ -29,6 +29,15 @@ export interface Organization {
 
 export type ProjectStatus = 'active' | 'planned' | 'completed' | 'archived' | 'on_hold'
 export type ProjectHealth = 'healthy' | 'on_track' | 'at_risk' | 'critical'
+export type ProjectType =
+  | 'platform'
+  | 'product'
+  | 'client_delivery'
+  | 'internal'
+  | 'data'
+  | 'design'
+/** Which projects the current actor may access — enforced at the service layer. */
+export type ProjectScope = 'organization' | 'managed' | 'assigned'
 
 export interface Project {
   id: string
@@ -38,6 +47,8 @@ export interface Project {
   status: ProjectStatus
   health: ProjectHealth
   progress: number
+  /** Project category in the new MyTracker model (platform/product/client delivery/etc.). */
+  type?: ProjectType
   ownerId: string
   businessAnalystId?: string
   client?: string

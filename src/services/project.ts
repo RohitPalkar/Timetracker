@@ -3,10 +3,10 @@
  * Backed by the in-memory mock store; the same interface will be reimplemented
  * against a REST API in the integration phase without touching feature code.
  */
-import type { Milestone, Project, ProjectActivity, ProjectMember, ProjectMemberRole, ProjectStatus, User } from '@/types'
+import type { Milestone, Project, ProjectActivity, ProjectMember, ProjectMemberRole, ProjectScope, ProjectStatus, ProjectType, User } from '@/types'
 import type { PageParams, SortSpec } from '@/types/api'
 import { projectActivityStore, projectMemberStore, projectStore, milestoneStore, userStore } from './stores'
-import { mockDelay } from './http'
+import { ApiError, mockDelay } from './http'
 import { projectMemberKey } from '@/mocks/data'
 import { uid } from '@/lib/utils'
 
@@ -15,10 +15,11 @@ export interface CreateProjectInput {
   key?: string
   client?: string
   description?: string
+  type?: ProjectType
   ownerId: string
   businessAnalystId?: string
   startDate: string
-  endDate: string
+  endDate?: string
   budget: number
   status: ProjectStatus
   teamMemberIds?: string[]
@@ -42,6 +43,14 @@ export interface ProjectListParams extends PageParams {
   startFrom?: string
   /** endDate <= endBefore (ISO date). */
   endBefore?: string
+  /**
+   * Permission-driven project scope enforced here, at the data layer.
+   * `organization` → all projects; `managed` → projects the actor leads;
+   * `assigned` → projects the actor is a member of.
+   */
+  scope?: ProjectScope
+  /** Actor used to resolve `scope`. */
+  actorId?: string
   sort?: SortSpec
 }
 
@@ -136,7 +145,9 @@ async function syncMembers(
 }
 
 export const projectService = {
-  async list(params?: Partial<ProjectListParams>): Promise<{ items: ProjectListItem[]; total: number }> {
+  async list(
+    params?: Partial<ProjectListParams>,
+  ): Promise<{ items: ProjectListItem[]; total: number; scopeTotal: number }> {
     await mockDelay(320)
     const pageParams = params ? { page: params.page ?? 1, pageSize: params.pageSize ?? 20 } : undefined
 
@@ -147,6 +158,23 @@ export const projectService = {
             .items.map((item) => item.projectId),
         )
       : null
+
+    /**
+     * Scope is resolved server-side from the actor's membership graph. This is
+     * what the API layer will enforce with the authenticated user — the UI can
+     * never widen its own data scope.
+     */
+    const accessibleProjectIds =
+      params?.scope && params.scope !== 'organization' && params.actorId
+        ? new Set(
+            projectMemberStore
+              .query({ filters: { userId: params.actorId } })
+              .items.filter((member) => params.scope !== 'managed' || member.role === 'manager')
+              .map((member) => member.projectId),
+          )
+        : null
+
+    const scopeTotal = accessibleProjectIds ? accessibleProjectIds.size : projectStore.all().length
 
     const filters: Record<string, string | string[] | undefined> = {}
     if (params?.statuses && params.statuses.length > 0) filters.status = params.statuses
@@ -166,6 +194,7 @@ export const projectService = {
       filters,
       match: (project) => {
         if (memberProjectIds && !memberProjectIds.has(project.id)) return false
+        if (accessibleProjectIds && !accessibleProjectIds.has(project.id)) return false
         if (params?.startFrom && project.startDate < new Date(params.startFrom).toISOString()) return false
         if (params?.endBefore && project.endDate > new Date(params.endBefore).toISOString()) return false
         return true
@@ -174,7 +203,25 @@ export const projectService = {
       pageParams,
     })
 
-    return { items: result.items.map(toListItem), total: result.total }
+    return { items: result.items.map(toListItem), total: result.total, scopeTotal }
+  },
+
+  /** Users who may own/manage a project: management roles or evidence of managing one. */
+  async getEligibleProjectManagers(): Promise<User[]> {
+    await mockDelay(160)
+    const MANAGER_ROLES = new Set([
+      'role-org_admin',
+      'role-delivery_manager',
+      'role-delivery',
+      'role-project_manager',
+    ])
+    const managingIds = new Set(
+      projectMemberStore.query({ filters: { role: 'manager' } }).items.map((member) => member.userId),
+    )
+    return userStore
+      .all()
+      .filter((user) => user.status === 'active' && (MANAGER_ROLES.has(user.roleId) || managingIds.has(user.id)))
+      .sort((a, b) => a.name.localeCompare(b.name))
   },
 
   async get(id: string): Promise<Project> {
@@ -206,22 +253,61 @@ export const projectService = {
     }
   },
 
+  /**
+   * Access-aware workspace context for a single project. Enforces the same
+   * membership scope rules as `list()`: organization personas may open any
+   * project; everyone else must be a project member — managed personas
+   * additionally require the manager role. Throws ApiError(404) when the
+   * project does not exist and ApiError(403) when the actor is out of scope,
+   * so callers can render NotFound / Forbidden before any data is revealed.
+   */
+  async getWorkspaceContext(
+    projectId: string,
+    actor: { userId: string; scope: ProjectScope },
+  ): Promise<ProjectDetail & { member: ProjectMemberRecord | null }> {
+    await mockDelay(260)
+    const project = projectStore.get(projectId)
+    if (!project) throw new ApiError('This project does not exist.', 404, 'PROJECT_NOT_FOUND')
+    const rawMember = projectMemberStore.get(projectMemberKey(projectId, actor.userId)) ?? null
+    const allowed =
+      actor.scope === 'organization' ||
+      (rawMember !== null && (actor.scope !== 'managed' || rawMember.role === 'manager'))
+    if (!allowed) throw new ApiError('You do not have access to this project.', 403, 'PROJECT_FORBIDDEN')
+    const member = rawMember ? ({ ...rawMember, user: resolveUser(rawMember.userId) as User } as ProjectMemberRecord) : null
+    return {
+      project,
+      member,
+      members: withMembers(projectId),
+      milestones: milestoneStore.query({ filters: { projectId }, sort: { field: 'date', direction: 'asc' } }).items,
+      activity: projectActivityStore
+        .query({ filters: { projectId } })
+        .items.sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    }
+  },
+
   async create(input: CreateProjectInput): Promise<Project> {
     await mockDelay(420)
     const now = new Date().toISOString()
+    const key = normalizeKey(input.key, input.name)
+    const endDate = input.endDate ?? new Date(new Date(input.startDate).getTime() + 90 * 86_400_000).toISOString()
+
+    const keyTaken = projectStore.all().some((project) => project.key.toLowerCase() === key.toLowerCase())
+    if (keyTaken) throw new Error(`Project code "${key}" is already in use. Choose a different code.`)
+
     const project = projectStore.create({
       id: uid('prj'),
-      key: normalizeKey(input.key, input.name),
+      key,
       name: input.name,
       description: input.description ?? '',
       status: input.status ?? 'planned',
       health: 'healthy' as const,
+      type: input.type,
       progress: 0,
       ownerId: input.ownerId,
       businessAnalystId: input.businessAnalystId,
       client: input.client || undefined,
       startDate: input.startDate,
-      endDate: input.endDate,
+      endDate,
       budget: input.budget ?? 0,
       spent: 0,
       tags: [],
@@ -244,9 +330,16 @@ export const projectService = {
     await mockDelay(300)
     const existing = projectStore.get(id)
     if (!existing) throw new Error('Project not found')
+    const nextKey = input.key ? normalizeKey(input.key, existing.name) : existing.key
+    const keyTaken =
+      nextKey !== existing.key &&
+      projectStore.all().some(
+        (project) => project.id !== id && project.key.toLowerCase() === nextKey.toLowerCase(),
+      )
+    if (keyTaken) throw new Error(`Project code "${nextKey}" is already in use. Choose a different code.`)
     const updated = projectStore.update(id, {
       ...input,
-      key: input.key ? normalizeKey(input.key, existing.name) : existing.key,
+      key: nextKey,
       client: input.client === '' ? undefined : input.client,
       updatedAt: new Date().toISOString(),
     })
