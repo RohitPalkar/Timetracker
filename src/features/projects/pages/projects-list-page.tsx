@@ -32,8 +32,7 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate, formatRelative } from '@/lib/formats'
 import { pluralize } from '@/lib/utils'
 import { toast } from 'sonner'
-import { useAuth } from '@/store/auth'
-import { personaForRole } from '@/config/dashboard-config'
+import { useDemoPersona } from '@/store/persona'
 import {
   DEMO_ACTOR_BY_PERSONA,
   PROJECT_PERSONAS,
@@ -72,9 +71,7 @@ interface ColumnHandlers {
 
 export function ProjectsListPage() {
   const navigate = useNavigate()
-  const { authUser } = useAuth()
-
-  const [persona, setPersona] = React.useState<DashboardPersona>(() => personaForRole(authUser?.roleId))
+  const { persona, setPersona } = useDemoPersona()
   const config = getProjectConfig(persona)
 
   /**

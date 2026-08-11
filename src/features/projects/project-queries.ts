@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { projectService, userService, type ProjectListParams, type ProjectMemberRecord } from '@/services'
 import { MAX_LIST_PAGE_SIZE } from '@/constants'
-import { useAuth } from '@/store/auth'
-import { personaForRole } from '@/config/dashboard-config'
-import { DEMO_ACTOR_BY_PERSONA, getProjectConfig } from '@/config/project-config'
+import { useDemoPersona } from '@/store/persona'
+import { getProjectConfig, DEMO_ACTOR_BY_PERSONA } from '@/config/project-config'
 import type { ProjectMemberRole, User } from '@/types'
 
 /** Query key factory — mirrors the REST endpoint hierarchy for the API phase. */
@@ -46,13 +45,13 @@ export function useEligibleProjectManagers(): { managers: User[]; isLoading: boo
 }
 
 /**
- * Resolve the current actor (persona → seeded demo actor) the same way the
- * Projects List does. Services enforce scope from `scope` + `actorId`, so the
- * UI can never widen its own data scope.
+ * Resolve the current actor (demo persona → seeded demo actor) the same way
+ * the Projects List does. Services enforce scope from `scope` + `actorId`, so
+ * the UI can never widen its own data scope. Reads the SHARED persona store so
+ * the persona selected on the list also drives the workspace guards.
  */
 export function useProjectActor() {
-  const { authUser } = useAuth()
-  const persona = personaForRole(authUser?.roleId)
+  const { persona } = useDemoPersona()
   const config = getProjectConfig(persona)
   return { persona, actorId: DEMO_ACTOR_BY_PERSONA[persona], scope: config.scope }
 }
@@ -86,7 +85,11 @@ export function useProjectMutations() {
 
   const invalidate = (ids: string[]) => {
     queryClient.invalidateQueries({ queryKey: projectKeys.lists() })
-    for (const id of ids) queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) })
+    for (const id of ids) {
+      queryClient.invalidateQueries({ queryKey: projectKeys.detail(id) })
+      queryClient.invalidateQueries({ queryKey: [...projectKeys.all, 'workspace', id] })
+      queryClient.invalidateQueries({ queryKey: [...projectKeys.all, 'teams', id] })
+    }
   }
 
   const invalidateAll = () => {

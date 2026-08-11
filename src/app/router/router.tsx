@@ -11,6 +11,9 @@ import { ProjectsListPage } from '@/features/projects/pages/projects-list-page'
 import { RequireProjectCreate } from '@/features/projects/components/require-project-create'
 import { ProjectWorkspacePage } from '@/features/projects/pages/project-workspace-page'
 import { ProjectWorkspaceOverviewPage } from '@/features/projects/pages/project-workspace-overview-page'
+import { ProjectWorkspaceTeamsPage } from '@/features/projects/pages/project-workspace-teams-page'
+import { ProjectSubProjectsPage } from '@/features/projects/pages/project-sub-projects-page'
+import { SubProjectWorkspaceOverviewPage } from '@/features/projects/pages/sub-project-workspace-overview-page'
 import { ProjectWorkspacePlaceholderPage } from '@/features/projects/pages/project-workspace-placeholder-page'
 import { SubProjectWorkspacePage } from '@/features/projects/pages/sub-project-workspace-page'
 import { SubProjectWorkspacePlaceholderPage } from '@/features/projects/pages/sub-project-workspace-placeholder-page'
@@ -89,8 +92,8 @@ export const router = createBrowserRouter([
                   { path: 'sprints', element: <ProjectWorkspacePlaceholderPage navId="sprints" /> },
                   { path: 'board', element: <ProjectWorkspacePlaceholderPage navId="board" /> },
                   { path: 'releases', element: <ProjectWorkspacePlaceholderPage navId="releases" /> },
-                  { path: 'sub-projects', element: <ProjectWorkspacePlaceholderPage navId="sub-projects" /> },
-                  { path: 'teams', element: <ProjectWorkspacePlaceholderPage navId="teams" /> },
+                  { path: 'sub-projects', element: <ProjectSubProjectsPage /> },
+                  { path: 'teams', element: <ProjectWorkspaceTeamsPage /> },
                   { path: 'reports', element: <ProjectWorkspacePlaceholderPage navId="reports" /> },
                   { path: 'files', element: <ProjectWorkspacePlaceholderPage navId="files" /> },
                   { path: 'settings', element: <ProjectWorkspacePlaceholderPage navId="settings" /> },
@@ -99,7 +102,7 @@ export const router = createBrowserRouter([
                     element: <SubProjectWorkspacePage />,
                     children: [
                       { index: true, element: <Navigate to="./overview" replace /> },
-                      { path: 'overview', element: <SubProjectWorkspacePlaceholderPage navId="overview" /> },
+                      { path: 'overview', element: <SubProjectWorkspaceOverviewPage /> },
                       { path: 'backlog', element: <SubProjectWorkspacePlaceholderPage navId="backlog" /> },
                       { path: 'epics', element: <SubProjectWorkspacePlaceholderPage navId="epics" /> },
                       { path: 'sprints', element: <SubProjectWorkspacePlaceholderPage navId="sprints" /> },

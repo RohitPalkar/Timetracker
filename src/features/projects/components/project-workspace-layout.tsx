@@ -25,10 +25,11 @@ export function ProjectWorkspaceLayout({ children }: { children: React.ReactNode
   const [editOpen, setEditOpen] = React.useState(false)
   const [confirmArchive, setConfirmArchive] = React.useState(false)
 
-  const managerName = React.useMemo(
-    () => users.find((user) => user.id === project.ownerId)?.name ?? 'Unassigned',
-    [users, project.ownerId],
-  )
+  const managerName = React.useMemo(() => {
+    const ids = project.managerIds.length > 0 ? project.managerIds : [project.ownerId]
+    const names = ids.map((id) => users.find((user) => user.id === id)?.name).filter(Boolean)
+    return names.length > 0 ? names.join(', ') : 'Unassigned'
+  }, [users, project.managerIds, project.ownerId])
 
   const activeItem = findWorkspaceNavItem(
     project.id,

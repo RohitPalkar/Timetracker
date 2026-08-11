@@ -5,9 +5,8 @@ import { NotFoundState } from '@/components/feedback/not-found-state'
 import { ErrorState } from '@/components/feedback/error-state'
 import { ApiError } from '@/services/http'
 import { useSubProjectWorkspaceContext } from '../sub-project-queries'
-import { useAuth } from '@/store/auth'
-import { personaForRole } from '@/config/dashboard-config'
-import { DEMO_ACTOR_BY_PERSONA, getProjectConfig, hasProjectCapability, type ProjectCapability } from '@/config/project-config'
+import { useProjectActor } from '../project-queries'
+import { getProjectConfig, hasProjectCapability, type ProjectCapability } from '@/config/project-config'
 import { SubProjectWorkspaceContext, type SubProjectWorkspaceContextValue } from './sub-project-workspace-context'
 
 /**
@@ -23,7 +22,7 @@ import { SubProjectWorkspaceContext, type SubProjectWorkspaceContextValue } from
  */
 export function RequireSubProjectAccess({ children }: { children: React.ReactNode }) {
   const { projectId, subProjectId } = useParams()
-  const { authUser } = useAuth()
+  const actor = useProjectActor()
   const query = useSubProjectWorkspaceContext(subProjectId)
 
   if (query.isLoading) return <SubProjectWorkspaceSkeleton />
@@ -59,8 +58,7 @@ export function RequireSubProjectAccess({ children }: { children: React.ReactNod
 
   if (!query.data) return <SubProjectWorkspaceSkeleton />
 
-  const persona = personaForRole(authUser?.roleId)
-  const config = getProjectConfig(persona)
+  const config = getProjectConfig(actor.persona)
   const can = (capability: ProjectCapability) => hasProjectCapability(config, capability)
   const context: SubProjectWorkspaceContextValue = {
     projectId: query.data.subProject.projectId,
@@ -69,8 +67,8 @@ export function RequireSubProjectAccess({ children }: { children: React.ReactNod
     member: query.data.member,
     members: query.data.members,
     teams: query.data.teams,
-    persona,
-    actorId: DEMO_ACTOR_BY_PERSONA[persona],
+    persona: actor.persona,
+    actorId: actor.actorId,
     can,
   }
 

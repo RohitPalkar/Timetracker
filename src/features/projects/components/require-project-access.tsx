@@ -4,10 +4,8 @@ import { ForbiddenState } from './forbidden-state'
 import { NotFoundState } from '@/components/feedback/not-found-state'
 import { ErrorState } from '@/components/feedback/error-state'
 import { ApiError } from '@/services/http'
-import { useWorkspaceContext } from '../project-queries'
-import { useAuth } from '@/store/auth'
-import { personaForRole } from '@/config/dashboard-config'
-import { DEMO_ACTOR_BY_PERSONA, getProjectConfig, hasProjectCapability, type ProjectCapability } from '@/config/project-config'
+import { useProjectActor, useWorkspaceContext } from '../project-queries'
+import { getProjectConfig, hasProjectCapability, type ProjectCapability } from '@/config/project-config'
 import { ProjectWorkspaceContext, type ProjectWorkspaceContextValue } from './project-workspace-context'
 
 /**
@@ -22,7 +20,7 @@ import { ProjectWorkspaceContext, type ProjectWorkspaceContextValue } from './pr
  */
 export function RequireProjectAccess({ children }: { children: React.ReactNode }) {
   const { projectId } = useParams()
-  const { authUser } = useAuth()
+  const actor = useProjectActor()
   const query = useWorkspaceContext(projectId)
 
   if (query.isLoading) return <ProjectWorkspaceSkeleton />
@@ -48,8 +46,7 @@ export function RequireProjectAccess({ children }: { children: React.ReactNode }
 
   if (!query.data) return <ProjectWorkspaceSkeleton />
 
-  const persona = personaForRole(authUser?.roleId)
-  const config = getProjectConfig(persona)
+  const config = getProjectConfig(actor.persona)
   const can = (capability: ProjectCapability) => hasProjectCapability(config, capability)
   const context: ProjectWorkspaceContextValue = {
     project: query.data.project,
@@ -57,8 +54,10 @@ export function RequireProjectAccess({ children }: { children: React.ReactNode }
     members: query.data.members,
     subProjects: query.data.subProjects,
     teams: query.data.teams,
-    persona,
-    actorId: DEMO_ACTOR_BY_PERSONA[persona],
+    milestones: query.data.milestones,
+    activity: query.data.activity,
+    persona: actor.persona,
+    actorId: actor.actorId,
     can,
   }
 
