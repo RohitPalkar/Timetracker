@@ -1,6 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { projectService, userService, type ProjectListParams, type ProjectMemberRecord } from '@/services'
 import { MAX_LIST_PAGE_SIZE } from '@/constants'
+import { useAuth } from '@/store/auth'
+import { personaForRole } from '@/config/dashboard-config'
+import { DEMO_ACTOR_BY_PERSONA, getProjectConfig } from '@/config/project-config'
 import type { ProjectMemberRole, User } from '@/types'
 
 /** Query key factory — mirrors the REST endpoint hierarchy for the API phase. */
@@ -29,6 +32,32 @@ export function useProjectDetail(projectId: string | undefined) {
   return useQuery({
     queryKey: projectKeys.detail(projectId ?? 'none'),
     queryFn: () => projectService.detail(projectId as string),
+    enabled: Boolean(projectId),
+  })
+}
+
+/** Users who may act as a project manager — consumed by the create/edit form. */
+export function useEligibleProjectManagers(): { managers: User[]; isLoading: boolean } {
+  const query = useQuery({
+    queryKey: [...projectKeys.all, 'eligible-managers'],
+    queryFn: () => projectService.getEligibleProjectManagers(),
+  })
+  return { managers: query.data ?? [], isLoading: query.isLoading }
+}
+
+/**
+ * Access-aware Project Workspace context. Resolves the actor the same way the
+ * Projects List does (persona → seeded demo actor) and lets the service
+ * enforce scope — 404 / 403 are surfaced as ApiError statuses.
+ */
+export function useWorkspaceContext(projectId: string | undefined) {
+  const { authUser } = useAuth()
+  const persona = personaForRole(authUser?.roleId)
+  const config = getProjectConfig(persona)
+  const actor = { userId: DEMO_ACTOR_BY_PERSONA[persona], scope: config.scope }
+  return useQuery({
+    queryKey: [...projectKeys.all, 'workspace', projectId ?? 'none'],
+    queryFn: () => projectService.getWorkspaceContext(projectId as string, actor),
     enabled: Boolean(projectId),
   })
 }

@@ -27,4 +27,9 @@ export { userService } from './user'
 export { notificationService } from './notification'
 export { dashboardService } from './dashboard'
 export { stores } from './stores'
-export type { DashboardOverview, DashboardMetric } from './dashboard'
+export type {
+  DashboardPayload,
+  DashboardFilters,
+  DashboardFilterOptions,
+  DashboardKpi,
+} from '@/types/dashboard'
