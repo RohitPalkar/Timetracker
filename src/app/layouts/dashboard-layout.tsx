@@ -14,14 +14,14 @@ export function DashboardLayout() {
       <Sidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-[272px] p-0">
+        <SheetContent side="left" className="w-[228px] p-0">
           <Sidebar variant="mobile" collapsed={false} onCollapsedChange={() => {}} onNavigate={() => setMobileOpen(false)} />
         </SheetContent>
       </Sheet>
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenuClick={() => setMobileOpen(true)} />
-        <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-6 lg:px-6 lg:py-8">
+        <main className="mx-auto w-full max-w-[1600px] flex-1 px-4 py-4 lg:px-6 lg:py-6">
           <Outlet />
         </main>
       </div>
