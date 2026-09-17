@@ -32,10 +32,8 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate, formatRelative } from '@/lib/formats'
 import { pluralize } from '@/lib/utils'
 import { toast } from 'sonner'
-import { useAuth } from '@/store/auth'
-import { personaForRole } from '@/config/dashboard-config'
+import { useProjectActor } from '../project-queries'
 import {
-  DEMO_ACTOR_BY_PERSONA,
   getProjectConfig,
   hasProjectCapability,
   type ProjectCapability,
@@ -70,16 +68,8 @@ interface ColumnHandlers {
 
 export function ProjectsListPage() {
   const navigate = useNavigate()
-  const { authUser } = useAuth()
-  const persona = personaForRole(authUser?.roleId)
+  const { persona, actorId } = useProjectActor()
   const config = getProjectConfig(persona)
-
-  /**
-   * Actor for scope resolution. Until Supabase Auth provides a real user id,
-   * maps the authenticated persona to a seeded demo actor so managed/assigned
-   * scope remains observable.
-   */
-  const actorId = DEMO_ACTOR_BY_PERSONA[persona]
 
   const can = (capability: ProjectCapability) => hasProjectCapability(config, capability)
   const canCreate = can('projects.create')
