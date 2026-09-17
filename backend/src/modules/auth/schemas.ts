@@ -13,3 +13,8 @@ export const verifyOtpQuerySchema = z.object({
   email: z.string().optional(),
   code: z.string().optional(),
 })
+
+export const loginSchema = z.object({
+  email: z.string().email().transform(v => v.trim().toLowerCase()),
+  password: z.string().min(1, 'Password is required').max(100),
+})

@@ -41,6 +41,24 @@ export async function verifyOtp(email: string, code: string): Promise<{ access_t
   return { access_token: data.session.access_token, refresh_token: data.session.refresh_token, user: { id: data.user!.id, email: normalized } }
 }
 
+export async function loginWithPassword(email: string, password: string): Promise<{ access_token: string; refresh_token: string; user: { id: string; email: string } }> {
+  const normalized = email.trim().toLowerCase()
+  if (!normalized || !password) throw new ApiError('Email and password are required', 400, 'VALIDATION_ERROR')
+
+  if (!isSupabaseEnabled() && env.demoAuthFallback) {
+    // Mock password check — demo@mytracker.local / Demo123456!
+    if (normalized !== 'demo@mytracker.local') throw new ApiError('Invalid email or password', 401, 'AUTH_INVALID')
+    if (password !== 'Demo123456!') throw new ApiError('Invalid email or password', 401, 'AUTH_INVALID')
+    return { access_token: `mock:${normalized}:${Date.now()}`, refresh_token: 'mock-refresh', user: { id: MOCK_USER.auth_user_id, email: normalized } }
+  }
+
+  if (!isSupabaseEnabled()) throw new ApiError('Auth not configured', 500, 'INTERNAL_ERROR')
+  const anon = getSupabaseAnon()!
+  const { data, error } = await anon.auth.signInWithPassword({ email: normalized, password })
+  if (error || !data.session) throw new ApiError(error?.message ?? 'Invalid email or password', 401, 'AUTH_INVALID')
+  return { access_token: data.session.access_token, refresh_token: data.session.refresh_token, user: { id: data.user.id, email: normalized } }
+}
+
 export async function resolveMe(accessToken: string) {
   // Mock mode: token is mock:email:ts
   if (!isSupabaseEnabled() && accessToken.startsWith('mock:')) {

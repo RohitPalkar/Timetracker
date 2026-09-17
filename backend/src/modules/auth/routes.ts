@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify'
 import { parseOrThrow } from '../../lib/validation.js'
-import { requestOtpSchema, verifyOtpSchema } from './schemas.js'
-import { requestOtp, verifyOtp, resolveMe } from './service.js'
+import { requestOtpSchema, verifyOtpSchema, loginSchema } from './schemas.js'
+import { requestOtp, verifyOtp, loginWithPassword, resolveMe } from './service.js'
 import { authMiddleware } from '../../plugins/auth.js'
 
 export async function authRoutes(app: FastifyInstance) {
@@ -14,6 +14,12 @@ export async function authRoutes(app: FastifyInstance) {
   app.post('/api/v1/auth/verify-otp', async (req, reply) => {
     const { email, code } = parseOrThrow(verifyOtpSchema, req.body)
     const { access_token, refresh_token } = await verifyOtp(email, code)
+    return { access_token, refresh_token, token_type: 'Bearer' }
+  })
+
+  app.post('/api/v1/auth/login', async (req, reply) => {
+    const { email, password } = parseOrThrow(loginSchema, req.body)
+    const { access_token, refresh_token } = await loginWithPassword(email, password)
     return { access_token, refresh_token, token_type: 'Bearer' }
   })
 

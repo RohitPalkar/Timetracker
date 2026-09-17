@@ -203,6 +203,8 @@ function apiHeaders(): Record<string, string> {
   return {}
 }
 
+export const DEMO_PASSWORD = 'Demo123456!'
+
 function resolvePermissions(roles: RoleKey[]): PermissionKey[] {
   if (roles.includes('super_admin') || roles.includes('org_admin')) return ['admin.all']
   const set = new Set<PermissionKey>()
@@ -218,6 +220,75 @@ function resolvePermissions(roles: RoleKey[]): PermissionKey[] {
 // ------------------------------------------------------------------
 
 export const authService = {
+  /** POST /api/v1/auth/login — email + password (primary, replaces OTP for now). */
+  async login(email: string, password: string): Promise<AuthResult> {
+    if (!IS_MOCK_MODE) {
+      try {
+        const res = await request<{ access_token: string; refresh_token: string }>('/api/v1/auth/login', {
+          method: 'POST',
+          body: { email, password },
+        })
+        writeTokens({ access_token: res.access_token, refresh_token: res.refresh_token })
+        // Build rich session from /auth/me
+        const me = await request<AuthMeResponse>('/api/v1/auth/me', {
+          headers: apiHeaders(),
+        } as any)
+        const sess: StoredAuthSession = {
+          userId: me.user.id,
+          email: me.user.email,
+          name: me.user.name,
+          designation: (me.user as any).designation ?? 'Member',
+          roleId: `role-${me.roles[0] ?? 'employee'}`,
+          user: me.user as AuthUser,
+          organizations: me.organizations.map((o) => ({ id: o.id, name: o.name })) as AuthOrganization[],
+          activeOrganization: me.activeOrganization!,
+          membership: {
+            id: me.membership?.id ?? 'mem-1',
+            userId: me.user.id,
+            organizationId: me.activeOrganization!.id,
+            organization: me.activeOrganization!,
+            roles: me.roles as RoleKey[],
+            primaryRole: (me.roles[0] as RoleKey) ?? 'employee',
+            permissions: me.permissions as PermissionKey[],
+          } as any,
+          roles: me.roles as RoleKey[],
+          permissions: me.permissions as PermissionKey[],
+          expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+        }
+        writeStoredSession(sess)
+        localStorage.removeItem(PENDING_EMAIL_KEY)
+        return { ok: true }
+      } catch (e: any) {
+        const msg = e instanceof ApiError ? e.message : 'Login failed.'
+        const code = e instanceof ApiError ? e.code : undefined
+        return { ok: false, error: msg, code }
+      }
+    }
+    // Mock fallback
+    await mockDelay(600)
+    const norm = email.trim().toLowerCase()
+    if (norm !== DEMO_SUPER_ADMIN_EMAIL.toLowerCase() || password !== DEMO_PASSWORD) {
+      return { ok: false, error: 'Invalid email or password', code: 'AUTH_INVALID' }
+    }
+    const membership = buildDemoMembership()
+    const sess: StoredAuthSession = {
+      userId: DEMO_USER.id,
+      email: DEMO_USER.email,
+      name: DEMO_USER.name,
+      designation: DEMO_USER.designation,
+      roleId: 'role-super_admin',
+      user: DEMO_USER,
+      organizations: ALL_ORGANIZATIONS,
+      activeOrganization: DEMO_ORG_ACME,
+      membership,
+      roles: membership.roles,
+      permissions: membership.permissions,
+      expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+    }
+    writeStoredSession(sess)
+    return { ok: true }
+  },
+
   /** POST /api/v1/auth/request-otp — validate email and issue demo OTP. */
   async requestOtp(email: string): Promise<OtpRequestResult> {
     if (!IS_MOCK_MODE) {
