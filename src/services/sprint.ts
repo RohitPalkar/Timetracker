@@ -7,6 +7,7 @@ import { mockDelay } from './http'
 
 export interface CreateSprintInput {
   projectId: string
+  subProjectId?: string
   name: string
   goal?: string
   startDate: string
@@ -17,11 +18,33 @@ export interface UpdateSprintInput extends Partial<CreateSprintInput> {
   status?: SprintStatus
 }
 
+export interface SprintListParams {
+  projectId?: string
+  subProjectId?: string
+}
 
 export const sprintRepository = {
-  async list(projectId?: string): Promise<Sprint[]> {
+  async list(projectId?: string, params?: SprintListParams): Promise<Sprint[]> {
     await mockDelay(300)
-    return sprintStore.query({ filters: projectId ? { projectId } : undefined, sort: { field: 'endDate', direction: 'desc' } }).items
+    const filters: Record<string, string | undefined> = {}
+    if (params?.projectId ?? projectId) filters.projectId = (params?.projectId ?? projectId) as string
+    if (params?.subProjectId) filters.subProjectId = params.subProjectId
+    return sprintStore.query({ filters: Object.keys(filters).length ? filters : undefined, sort: { field: 'endDate', direction: 'desc' } }).items
+  },
+
+  async listByContext(context: { projectId: string; subProjectId?: string }): Promise<Sprint[]> {
+    await mockDelay(300)
+    const filters: Record<string, string | undefined> = { projectId: context.projectId }
+    if (context.subProjectId) filters.subProjectId = context.subProjectId
+    // Isolation: when subProjectId is specified, only return sprints for that sub-project.
+    // When absent, return only project-level sprints (subProjectId falsy) — prevents EFA Sprint 16 leaking into UTLITE.
+    return sprintStore
+      .query({
+        filters,
+        match: (sprint) => (context.subProjectId ? sprint.subProjectId === context.subProjectId : !sprint.subProjectId),
+        sort: { field: 'endDate', direction: 'desc' },
+      })
+      .items
   },
 
   async get(id: string): Promise<Sprint> {
@@ -65,16 +88,17 @@ export const sprintRepository = {
     return updated
   },
 
-  /** The next planned sprint for a project (virtual "Backlog" if none is scheduled). */
-  async backlog(projectId: string): Promise<Sprint> {
+  /** The next planned sprint for a project/sub-project (virtual "Backlog" if none is scheduled). */
+  async backlog(projectId: string, subProjectId?: string): Promise<Sprint> {
     await mockDelay(200)
     const next = sprintStore.find(
-      (sprint) => sprint.projectId === projectId && sprint.status === 'planned',
+      (sprint) => sprint.projectId === projectId && sprint.subProjectId === subProjectId && sprint.status === 'planned',
     )
     if (next) return next
     const now = new Date().toISOString()
     return sprintStore.create({
       projectId,
+      subProjectId,
       name: 'Backlog',
       goal: 'Unscheduled, prioritized work.',
       startDate: now,

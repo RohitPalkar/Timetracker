@@ -7,6 +7,7 @@ import { Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TextField } from '@/components/forms/text-field'
 import { useAuth } from '@/store/auth'
+import { OTP_DEMO_HINT } from '@/constants'
 
 const loginSchema = z.object({
   email: z.string().min(1, 'Email is required').email('Enter a valid email address'),
@@ -61,6 +62,12 @@ export function LoginPage() {
           Send code
         </Button>
       </form>
+
+      <div className="rounded-xl border border-dashed border-primary/30 bg-primary-soft/40 px-4 py-3 text-center">
+        <p className="text-xs text-primary">
+          Demo — use <span className="font-mono font-semibold">{OTP_DEMO_HINT}</span> to verify
+        </p>
+      </div>
 
       <p className="text-center text-xs text-muted-foreground">
         By continuing you agree to {`MyTracker`}'s terms of service.

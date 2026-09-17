@@ -9,6 +9,7 @@ import { mockDelay } from './http'
 
 export interface EpicListParams {
   projectId?: string
+  subProjectId?: string
   pageParams?: PageParams
   sort?: SortSpec
   search?: string
@@ -17,12 +18,25 @@ export interface EpicListParams {
 export const epicRepository = {
   async list(params?: EpicListParams): Promise<{ items: Epic[]; total: number }> {
     await mockDelay(300)
+    const filters: Record<string, string | undefined> = {}
+    if (params?.projectId) filters.projectId = params.projectId
+    if (params?.subProjectId) filters.subProjectId = params.subProjectId
     const result = epicStore.query({
       search: params?.search,
       searchFields: ['key', 'name', 'summary'],
-      filters: params?.projectId ? { projectId: params.projectId } : undefined,
+      filters: Object.keys(filters).length ? filters : undefined,
       sort: params?.sort ?? { field: 'pointsTotal', direction: 'desc' },
       pageParams: params?.pageParams,
+    })
+    return { items: result.items, total: result.total }
+  },
+
+  async listByContext(context: { projectId: string; subProjectId?: string }): Promise<{ items: Epic[]; total: number }> {
+    await mockDelay(300)
+    const result = epicStore.query({
+      filters: { projectId: context.projectId },
+      match: (epic) => (context.subProjectId ? epic.subProjectId === context.subProjectId : !epic.subProjectId),
+      sort: { field: 'pointsTotal', direction: 'desc' },
     })
     return { items: result.items, total: result.total }
   },

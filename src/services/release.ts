@@ -9,6 +9,7 @@ import { mockDelay } from './http'
 
 export interface ReleaseListParams {
   projectId?: string
+  subProjectId?: string
   status?: ReleaseStatus
   pageParams?: PageParams
   sort?: SortSpec
@@ -23,10 +24,21 @@ export const releaseRepository = {
       searchFields: ['key', 'name', 'version', 'description'],
       filters: {
         ...(params?.projectId ? { projectId: params.projectId } : undefined),
+        ...(params?.subProjectId ? { subProjectId: params.subProjectId } : undefined),
         ...(params?.status ? { status: params.status } : undefined),
       },
       sort: params?.sort ?? { field: 'releaseDate', direction: 'desc' },
       pageParams: params?.pageParams,
+    })
+    return { items: result.items, total: result.total }
+  },
+
+  async listByContext(context: { projectId: string; subProjectId?: string }): Promise<{ items: Release[]; total: number }> {
+    await mockDelay(300)
+    const result = releaseStore.query({
+      filters: { projectId: context.projectId },
+      match: (r) => (context.subProjectId ? r.subProjectId === context.subProjectId : !r.subProjectId),
+      sort: { field: 'releaseDate', direction: 'desc' },
     })
     return { items: result.items, total: result.total }
   },

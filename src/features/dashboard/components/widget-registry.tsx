@@ -31,4 +31,10 @@ export const DASHBOARD_WIDGET_COMPONENTS: Record<DashboardWidgetId, DashboardWid
   'org-activity': (props) => (
     <OrgActivityWidget risks={props.data.risks} alerts={props.data.alerts} activity={props.data.activity} loading={props.loading} />
   ),
+  'action-center': () => null,
+  'my-hrms': () => null,
+  'my-timesheet': () => null,
+  'my-work': () => null,
+  'my-team': () => null,
+  'management-ops': () => null,
 }

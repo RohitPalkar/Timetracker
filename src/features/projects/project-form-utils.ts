@@ -9,6 +9,7 @@ export function projectToFormValues(project: Project, memberUserIds: string[]): 
     client: project.client ?? '',
     type: project.type ?? 'platform',
     description: project.description,
+    managerIds: project.managerIds.length > 0 ? project.managerIds : project.ownerId ? [project.ownerId] : [],
     ownerId: project.ownerId,
     businessAnalystId: project.businessAnalystId ?? '',
     startDate: project.startDate.slice(0, 10),

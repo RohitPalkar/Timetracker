@@ -16,7 +16,9 @@ export interface CreateProjectInput {
   client?: string
   description?: string
   type?: ProjectType
-  ownerId: string
+  managerIds: string[]
+  /** @deprecated Use managerIds instead. */
+  ownerId?: string
   businessAnalystId?: string
   startDate: string
   endDate?: string
@@ -102,9 +104,13 @@ function withMembers(projectId: string): ProjectMemberRecord[] {
 
 function toListItem(project: Project): ProjectListItem {
   const members = projectMemberStore.query({ filters: { projectId: project.id } }).items
+  const primaryManagerId = project.managerIds[0] ?? project.ownerId
   return {
     ...project,
-    managerName: resolveUser(project.ownerId)?.name ?? 'Unassigned',
+    managerName:
+      project.managerIds.length > 1
+        ? `${resolveUser(primaryManagerId)?.name ?? 'Unassigned'} +${project.managerIds.length - 1}`
+        : (resolveUser(primaryManagerId)?.name ?? 'Unassigned'),
     businessAnalystName: resolveUser(project.businessAnalystId)?.name,
     memberCount: members.length,
     memberUsers: members.map((member) => {
@@ -128,10 +134,12 @@ function normalizeKey(key: string | undefined, name: string): string {
 
 async function syncMembers(
   projectId: string,
-  input: { ownerId?: string; businessAnalystId?: string; teamMemberIds?: string[] },
+  input: { managerIds?: string[]; ownerId?: string; businessAnalystId?: string; teamMemberIds?: string[] },
 ): Promise<void> {
-  const desired = new Set([input.ownerId, input.businessAnalystId, ...(input.teamMemberIds ?? [])].filter(Boolean) as string[])
+  const managerIds = input.managerIds ?? (input.ownerId ? [input.ownerId] : [])
+  const desired = new Set([...managerIds, input.businessAnalystId, ...(input.teamMemberIds ?? [])].filter(Boolean) as string[])
   const existing = projectMemberStore.query({ filters: { projectId } }).items
+  const managerSet = new Set(managerIds)
 
   for (const member of existing) {
     if (!desired.has(member.userId)) projectMemberStore.remove(member.id)
@@ -142,10 +150,13 @@ async function syncMembers(
         id: projectMemberKey(projectId, userId),
         projectId,
         userId,
-        role: userId === input.ownerId ? 'manager' : userId === input.businessAnalystId ? 'business_analyst' : 'developer',
+        role: managerSet.has(userId) ? 'manager' : userId === input.businessAnalystId ? 'business_analyst' : 'developer',
         capacity: 80,
         joinedAt: new Date().toISOString(),
       })
+    } else if (managerSet.has(userId)) {
+      // Ensure promoted to manager if now in managerIds
+      projectMemberStore.update(projectMemberKey(projectId, userId), { role: 'manager' })
     }
   }
 }
@@ -184,12 +195,16 @@ export const projectService = {
 
     const filters: Record<string, string | string[] | undefined> = {}
     if (params?.statuses && params.statuses.length > 0) filters.status = params.statuses
-    if (params?.ownerId) filters.ownerId = params.ownerId
+    // Do NOT filter ownerId via store filter — managerIds[] needs 'contains' check, handled in match()
     if (params?.client) filters.client = params.client
 
+    const managerSearchAccessor = (row: Project): string[] =>
+      (row.managerIds.length > 0 ? row.managerIds : [row.ownerId])
+        .map((id) => resolveUser(id)?.name ?? '')
+        .filter(Boolean)
     const searchAccessors: Array<(row: Project) => string | string[] | undefined> = params?.search
       ? [
-          (row) => (resolveUser(row.ownerId)?.name ?? ''),
+          (row) => managerSearchAccessor(row).join(' '),
           (row) => (resolveUser(row.businessAnalystId)?.name ?? ''),
         ]
       : []
@@ -199,6 +214,10 @@ export const projectService = {
       searchFields: ['name', 'key', 'client', 'tags', ...searchAccessors],
       filters,
       match: (project) => {
+        if (params?.ownerId) {
+          const ids = project.managerIds.length > 0 ? project.managerIds : [project.ownerId]
+          if (!ids.includes(params.ownerId)) return false
+        }
         if (memberProjectIds && !memberProjectIds.has(project.id)) return false
         if (accessibleProjectIds && !accessibleProjectIds.has(project.id)) return false
         if (params?.startFrom && project.startDate < new Date(params.startFrom).toISOString()) return false
@@ -302,6 +321,9 @@ export const projectService = {
     const keyTaken = projectStore.all().some((project) => project.key.toLowerCase() === key.toLowerCase())
     if (keyTaken) throw new Error(`Project code "${key}" is already in use. Choose a different code.`)
 
+    const managerIds = input.managerIds ?? (input.ownerId ? [input.ownerId] : [])
+    if (managerIds.length === 0) throw new Error('At least one project manager is required.')
+    const primaryOwner = managerIds[0]
     const project = projectStore.create({
       id: uid('prj'),
       key,
@@ -311,8 +333,8 @@ export const projectService = {
       health: 'healthy' as const,
       type: input.type,
       progress: 0,
-      ownerId: input.ownerId,
-      managerIds: input.ownerId ? [input.ownerId] : [],
+      ownerId: primaryOwner,
+      managerIds,
       businessAnalystId: input.businessAnalystId,
       client: input.client || undefined,
       startDate: input.startDate,
@@ -328,7 +350,7 @@ export const projectService = {
       id: uid('act'),
       projectId: project.id,
       type: 'settings',
-      actorId: input.ownerId,
+      actorId: primaryOwner,
       action: 'created the project',
       target: project.key,
       createdAt: now,
@@ -347,14 +369,17 @@ export const projectService = {
         (project) => project.id !== id && project.key.toLowerCase() === nextKey.toLowerCase(),
       )
     if (keyTaken) throw new Error(`Project code "${nextKey}" is already in use. Choose a different code.`)
+    const managerIds = input.managerIds ?? (input.ownerId ? [input.ownerId] : undefined)
+    const primaryOwner = managerIds?.[0] ?? existing.ownerId
     const updated = projectStore.update(id, {
       ...input,
+      ...(managerIds ? { managerIds, ownerId: primaryOwner } : {}),
       key: nextKey,
       client: input.client === '' ? undefined : input.client,
       updatedAt: new Date().toISOString(),
     })
-    if (input.ownerId || input.businessAnalystId || input.teamMemberIds) {
-      await syncMembers(id, input)
+    if (managerIds || input.ownerId || input.businessAnalystId || input.teamMemberIds) {
+      await syncMembers(id, { ...input, managerIds, ownerId: primaryOwner })
     }
     return updated as Project
   },

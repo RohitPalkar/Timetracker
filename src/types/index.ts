@@ -166,6 +166,7 @@ export interface Milestone {
 export interface Release {
   id: string
   projectId: string
+  subProjectId?: string
   name: string
   version: string
   releaseDate: string

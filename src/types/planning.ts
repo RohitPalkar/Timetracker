@@ -33,6 +33,7 @@ export interface Issue {
   id: string
   key: string
   projectId: string
+  subProjectId?: string
   type: IssueType
   title: string
   status: IssueStatus
@@ -52,6 +53,7 @@ export interface Release {
   id: string
   key: string
   projectId: string
+  subProjectId?: string
   name: string
   version: string
   description?: string

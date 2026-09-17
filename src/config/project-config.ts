@@ -143,6 +143,33 @@ export const PROJECT_PERSONAS: Record<DashboardPersona, ProjectPersonaConfig> = 
     filters: { status: true, manager: false, client: false, member: false, dateFrom: false, dateTo: false },
     columns: ['project', 'status', 'startDate', 'endDate', 'actions'],
   },
+  hr_admin: {
+    persona: 'hr_admin',
+    label: 'HR Admin',
+    description: 'Workforce and HR operations across the organization.',
+    scope: 'organization',
+    capabilities: ['projects.view', 'planning.view', 'board.view', 'documents.project.view'],
+    filters: { status: true, manager: true, client: false, member: true, dateFrom: false, dateTo: false },
+    columns: ['project', 'status', 'startDate', 'endDate', 'actions'],
+  },
+  finance: {
+    persona: 'finance',
+    label: 'Finance',
+    description: 'Finance and payroll operations.',
+    scope: 'organization',
+    capabilities: ['projects.view', 'reports.project.view', 'documents.project.view'],
+    filters: { status: true, manager: false, client: false, member: false, dateFrom: false, dateTo: false },
+    columns: ['project', 'status', 'budget', 'startDate', 'endDate', 'actions'],
+  },
+  department_head: {
+    persona: 'department_head',
+    label: 'Department Head',
+    description: 'Department delivery and workforce oversight.',
+    scope: 'managed',
+    capabilities: ['projects.view', 'planning.view', 'board.view', 'reports.project.view', 'documents.project.view'],
+    filters: { status: true, manager: true, client: false, member: true, dateFrom: true, dateTo: false },
+    columns: ['project', 'status', 'progress', 'startDate', 'endDate', 'actions'],
+  },
 }
 
 export function getProjectConfig(persona: DashboardPersona): ProjectPersonaConfig {
@@ -168,4 +195,7 @@ export const DEMO_ACTOR_BY_PERSONA: Record<DashboardPersona, string> = {
   business_analyst: 'user-aditi',
   employee: 'user-sara',
   qa: 'user-priya',
+  hr_admin: 'user-vikram',
+  finance: 'user-aisha',
+  department_head: 'user-arjun',
 }

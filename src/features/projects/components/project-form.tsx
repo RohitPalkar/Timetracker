@@ -74,13 +74,13 @@ export function ProjectForm({ defaultValues, users, eligibleManagers, submitLabe
           label="Status"
           options={PROJECT_STATUS_OPTIONS}
         />
-        <SelectField
+        <MultiSelectField
           control={form.control}
-          name="ownerId"
-          label="Project manager"
+          name="managerIds"
+          label="Project managers"
           required
           options={userOptions(eligibleManagers ?? users)}
-          placeholder="Select a manager…"
+          placeholder="Select managers…"
         />
         <SelectField
           control={form.control}

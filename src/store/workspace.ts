@@ -11,10 +11,18 @@ export interface WorkspaceFilters {
 
 interface WorkspaceState {
   /**
-   * Active project workspace context. Set from the route by the WorkspaceLayout,
-   * never from individual pages — every planning page stays scoped to one project.
+   * Active project workspace context. Set from the route by the WorkspaceLayout.
+   * Supports both:
+   *   Project → Sprint (flat / CASE A,C)
+   *   Project → SubProject → Sprint (structured / CASE B)
+   * subProjectId is optional — never inferred from UI state alone.
    */
   projectId: string | null
+  subProjectId: string | null
+  organizationId: string | null
+  setProjectContext: (params: { projectId: string | null; organizationId?: string | null; subProjectId?: string | null }) => void
+  setSubProjectId: (subProjectId: string | null) => void
+  /** @deprecated Use setProjectContext instead. */
   setProjectId: (projectId: string | null) => void
 
   /** Project-scoped planning UI state (no server/business data lives here). */
@@ -31,13 +39,20 @@ interface WorkspaceState {
 
 export const useWorkspace = create<WorkspaceState>((set) => ({
   projectId: null,
+  subProjectId: null,
+  organizationId: null,
   sprintId: null,
   view: 'board',
   search: '',
   filters: {},
 
+  setProjectContext: ({ projectId, organizationId = null, subProjectId = null }) =>
+    set({ projectId, organizationId, subProjectId, sprintId: null, view: 'board', search: '', filters: {} }),
+
+  setSubProjectId: (subProjectId) => set({ subProjectId, sprintId: null }),
+
   setProjectId: (projectId) =>
-    set({ projectId, sprintId: null, view: 'board', search: '', filters: {} }),
+    set({ projectId, subProjectId: null, sprintId: null, view: 'board', search: '', filters: {} }),
 
   setSprintId: (sprintId) => set({ sprintId }),
   setView: (view) => set({ view }),
@@ -51,5 +66,5 @@ export const useWorkspace = create<WorkspaceState>((set) => ({
 
 /** Reset planning-scoped UI state while keeping the project context. */
 export function resetWorkspaceProjectState() {
-  useWorkspace.getState().setProjectId(null)
+  useWorkspace.getState().setProjectContext({ projectId: null, organizationId: null, subProjectId: null })
 }

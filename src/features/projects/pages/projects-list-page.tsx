@@ -32,17 +32,16 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate, formatRelative } from '@/lib/formats'
 import { pluralize } from '@/lib/utils'
 import { toast } from 'sonner'
-import { useDemoPersona } from '@/store/persona'
+import { useAuth } from '@/store/auth'
+import { personaForRole } from '@/config/dashboard-config'
 import {
   DEMO_ACTOR_BY_PERSONA,
-  PROJECT_PERSONAS,
   getProjectConfig,
   hasProjectCapability,
   type ProjectCapability,
   type ProjectListColumnId,
 } from '@/config/project-config'
 import type { ProjectStatus } from '@/types'
-import type { DashboardPersona } from '@/types/dashboard'
 import { useProjectMutations, useProjects, useUserDirectory, type ProjectListFilter } from '../project-queries'
 import { ProjectFormDrawer } from '../components/project-form-drawer'
 import { PROJECT_STATUS_OPTIONS } from '../project-form-schema'
@@ -71,13 +70,14 @@ interface ColumnHandlers {
 
 export function ProjectsListPage() {
   const navigate = useNavigate()
-  const { persona, setPersona } = useDemoPersona()
+  const { authUser } = useAuth()
+  const persona = personaForRole(authUser?.roleId)
   const config = getProjectConfig(persona)
 
   /**
-   * Demo-phase actor for scope resolution. In the API phase the authenticated
-   * user drives scope server-side; this maps the selected persona to a seeded
-   * mock user so managed/assigned scope is observable.
+   * Actor for scope resolution. Until Supabase Auth provides a real user id,
+   * maps the authenticated persona to a seeded demo actor so managed/assigned
+   * scope remains observable.
    */
   const actorId = DEMO_ACTOR_BY_PERSONA[persona]
 
@@ -122,12 +122,6 @@ export function ProjectsListPage() {
   const openCreate = React.useCallback(() => setDrawer({ open: true, project: null }), [])
   const openEdit = React.useCallback((project: ProjectListItem) => setDrawer({ open: true, project }), [])
   const openWorkspace = React.useCallback((project: ProjectListItem) => navigate(`/projects/${project.id}`), [navigate])
-
-  const handlePersonaChange = (value: string) => {
-    setPersona(value as DashboardPersona)
-    setFilters(EMPTY_FILTERS)
-    setSelected([])
-  }
 
   const setFilter = <K extends keyof ProjectFilters>(key: K, value: ProjectFilters[K]) => {
     setFilters((current) => ({ ...current, [key]: value }))
@@ -294,25 +288,11 @@ export function ProjectsListPage() {
           description={config.description}
           breadcrumb={[{ label: 'Projects' }]}
           actions={
-            <>
-              <Select value={persona} onValueChange={handlePersonaChange}>
-                <SelectTrigger className="w-[170px]" aria-label="Project persona">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.values(PROJECT_PERSONAS).map((personaConfig) => (
-                    <SelectItem key={personaConfig.persona} value={personaConfig.persona}>
-                      {personaConfig.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {canCreate && (
-                <Button onClick={openCreate}>
-                  <Plus aria-hidden="true" /> New project
-                </Button>
-              )}
-            </>
+            canCreate && (
+              <Button onClick={openCreate}>
+                <Plus aria-hidden="true" /> New project
+              </Button>
+            )
           }
         />
       }

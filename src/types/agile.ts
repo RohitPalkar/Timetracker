@@ -5,6 +5,8 @@ export type SprintStatus = 'planned' | 'active' | 'completed'
 export interface Sprint {
   id: string
   projectId: string
+  /** Optional Sub Project scope — null/undefined means sprint belongs directly to the Project (CASE A/C). */
+  subProjectId?: string
   name: string
   goal?: string
   status: SprintStatus
@@ -29,6 +31,8 @@ export interface Story {
   id: string
   key: string
   projectId: string
+  /** Optional Sub Project scope — required when parent Project has hasSubProjects === true. */
+  subProjectId?: string
   epicId?: string
   sprintId?: string
   releaseId?: string
@@ -62,6 +66,7 @@ export interface Bug {
   id: string
   key: string
   projectId: string
+  subProjectId?: string
   storyId?: string
   title: string
   description: string
@@ -85,6 +90,7 @@ export interface Epic {
   id: string
   key: string
   projectId: string
+  subProjectId?: string
   name: string
   summary: string
   color: string

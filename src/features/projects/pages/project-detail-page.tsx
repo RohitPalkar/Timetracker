@@ -69,7 +69,10 @@ export function ProjectDetailPage() {
     )
 
   const { project, members, milestones, activity } = detailQuery.data
-  const managerName = userMap.get(project.ownerId)?.name ?? 'Unassigned'
+  const managerName =
+    (project.managerIds.length > 0 ? project.managerIds.map((id) => userMap.get(id)?.name).filter(Boolean).join(', ') : undefined) ??
+    userMap.get(project.ownerId)?.name ??
+    'Unassigned'
   const businessAnalystName = project.businessAnalystId ? userMap.get(project.businessAnalystId)?.name : undefined
 
   const copyLink = async () => {

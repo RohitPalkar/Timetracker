@@ -10,6 +10,7 @@ import { mockDelay } from './http'
 
 export interface CreateStoryInput {
   projectId: string
+  subProjectId?: string
   title: string
   description?: string
   epicId?: string
@@ -28,6 +29,7 @@ export interface UpdateStoryInput extends Partial<CreateStoryInput> {
 
 export interface StoryListParams {
   projectId?: string
+  subProjectId?: string
   sprintId?: string
   epicId?: string
   /** When true, only return stories not assigned to a sprint (backlog). */
@@ -55,10 +57,26 @@ export const storyRepository = {
     const result = storyStore.query({
       search: params?.search,
       searchFields: ['key', 'title', 'tags'],
-      filters: { ...params?.filters, projectId: params?.projectId, sprintId: params?.sprintId, epicId: params?.epicId },
+      filters: {
+        ...params?.filters,
+        projectId: params?.projectId,
+        subProjectId: params?.subProjectId,
+        sprintId: params?.sprintId,
+        epicId: params?.epicId,
+      },
       match: params?.backlogOnly ? (story) => !story.sprintId : undefined,
       sort: params?.sort ?? { field: 'updatedAt', direction: 'desc' },
       pageParams: params?.pageParams,
+    })
+    return { items: result.items, total: result.total }
+  },
+
+  async listByContext(context: { projectId: string; subProjectId?: string }): Promise<{ items: Story[]; total: number }> {
+    await mockDelay(350)
+    const result = storyStore.query({
+      filters: { projectId: context.projectId },
+      match: (story) => (context.subProjectId ? story.subProjectId === context.subProjectId : !story.subProjectId),
+      sort: { field: 'updatedAt', direction: 'desc' },
     })
     return { items: result.items, total: result.total }
   },

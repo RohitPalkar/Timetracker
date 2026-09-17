@@ -50,4 +50,15 @@ export const DEMO_PROJECT_TEAMS: Team[] = [
     createdAt: daysAgo(40),
     updatedAt: daysAgo(4),
   },
+  {
+    id: 'team-utec-shared',
+    projectId: 'prj-utec',
+    name: 'Platform Shared',
+    description: 'Shared platform engineering across EFA and UTLITE.',
+    type: 'cross_functional',
+    memberIds: ['user-arjun', 'user-kiran', 'user-lakshmi'],
+    subProjectIds: ['sprj-efa', 'sprj-utlite'],
+    createdAt: daysAgo(60),
+    updatedAt: daysAgo(1),
+  },
 ]

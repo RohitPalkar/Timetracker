@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { projectService, userService, type ProjectListParams, type ProjectMemberRecord } from '@/services'
 import { MAX_LIST_PAGE_SIZE } from '@/constants'
-import { useDemoPersona } from '@/store/persona'
+import { useAuth } from '@/store/auth'
+import { personaForRole } from '@/config/dashboard-config'
 import { getProjectConfig, DEMO_ACTOR_BY_PERSONA } from '@/config/project-config'
 import type { ProjectMemberRole, User } from '@/types'
 
@@ -45,13 +46,14 @@ export function useEligibleProjectManagers(): { managers: User[]; isLoading: boo
 }
 
 /**
- * Resolve the current actor (demo persona → seeded demo actor) the same way
- * the Projects List does. Services enforce scope from `scope` + `actorId`, so
- * the UI can never widen its own data scope. Reads the SHARED persona store so
- * the persona selected on the list also drives the workspace guards.
+ * Resolve the current actor from the authenticated session. Services enforce
+ * scope from `scope` + `actorId`; the UI never widens its own data scope.
+ * Until Supabase Auth maps to a real user id, the persona-derived demo actor
+ * preserves observable managed/assigned scope.
  */
 export function useProjectActor() {
-  const { persona } = useDemoPersona()
+  const { authUser } = useAuth()
+  const persona = personaForRole(authUser?.roleId)
   const config = getProjectConfig(persona)
   return { persona, actorId: DEMO_ACTOR_BY_PERSONA[persona], scope: config.scope }
 }

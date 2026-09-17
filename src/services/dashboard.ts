@@ -104,6 +104,12 @@ export const dashboardService = {
       risks: scopedRisks(filters),
       alerts: DEMO_ALERTS,
       activity: buildActivity(),
+      actionCenter: buildActionCenter(scopedProjects, filters),
+      myHRMS: buildMyHRMS(),
+      myTimesheet: buildMyTimesheet(filters),
+      myWork: buildMyWork(),
+      myTeam: buildMyTeam(filters),
+      management: buildManagement(scopedProjects),
     }
   },
 }
@@ -279,4 +285,165 @@ function sliceSeries<T extends { label: string }>(series: T[], range: DashboardF
 function avg(values: number[]): number {
   if (values.length === 0) return 0
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+}
+
+function buildMyHRMS(): import('@/types/dashboard').MyHRMSPayload {
+  const today = new Date()
+  const isHoliday = today.getDay() === 0
+  return {
+    attendance: {
+      status: isHoliday ? 'holiday' : 'present',
+      checkIn: isHoliday ? undefined : '09:32',
+      checkOut: undefined,
+      workingMinutes: isHoliday ? undefined : 272,
+      exceptionLabel: undefined,
+    },
+    leave: {
+      balances: [
+        { type: 'Casual', balance: 7, pending: 1, unit: 'days' },
+        { type: 'Sick', balance: 5, pending: 0, unit: 'days' },
+        { type: 'Earned', balance: 12, pending: 0, unit: 'days' },
+        { type: 'WFH', balance: 3, pending: 1, unit: 'days' },
+      ],
+      pending: [{ id: 'lr-1', type: 'Casual', from: new Date(Date.now() + 2 * DAY_MS).toISOString().slice(0, 10), to: new Date(Date.now() + 3 * DAY_MS).toISOString().slice(0, 10), days: 2, status: 'pending' }],
+      upcoming: [{ id: 'lr-2', type: 'Earned', from: new Date(Date.now() + 10 * DAY_MS).toISOString().slice(0, 10), to: new Date(Date.now() + 12 * DAY_MS).toISOString().slice(0, 10), days: 3, status: 'approved' }],
+      history: [{ id: 'lr-3', type: 'Sick', from: new Date(Date.now() - 20 * DAY_MS).toISOString().slice(0, 10), to: new Date(Date.now() - 19 * DAY_MS).toISOString().slice(0, 10), days: 1, status: 'approved' }],
+    },
+    holidays: [
+      { date: new Date(Date.now() + 5 * DAY_MS).toISOString().slice(0, 10), name: 'Dussehra', calendar: 'India - Maharashtra' },
+      { date: new Date(Date.now() + 18 * DAY_MS).toISOString().slice(0, 10), name: 'Diwali', calendar: 'India - Maharashtra' },
+      { date: new Date(Date.now() + 42 * DAY_MS).toISOString().slice(0, 10), name: 'Christmas', calendar: 'India - Karnataka' },
+    ],
+    documents: {
+      requiringAttention: 2,
+      expiringSoon: 1,
+      recent: [
+        { id: 'doc-hr-1', name: 'Employment Contract', updatedAt: new Date(Date.now() - 2 * DAY_MS).toISOString() },
+        { id: 'doc-hr-2', name: 'Salary Slip - Aug', updatedAt: new Date(Date.now() - 10 * DAY_MS).toISOString() },
+      ],
+    },
+    assets: {
+      allocated: 3,
+      items: [
+        { id: 'as-1', name: 'MacBook Pro 14"', type: 'Laptop', status: 'In Use' },
+        { id: 'as-2', name: 'Access Card', type: 'Card', status: 'Active' },
+        { id: 'as-3', name: 'Monitor', type: 'Monitor', status: 'Allocated' },
+      ],
+    },
+    hrRequests: {
+      pending: 1,
+      approved: 4,
+      rejected: 0,
+      items: [{ id: 'hrq-1', title: 'Address update', status: 'pending', createdAt: new Date(Date.now() - 1 * DAY_MS).toISOString() }],
+    },
+  }
+}
+
+function buildMyTimesheet(filters: DashboardFilters): import('@/types/dashboard').MyTimesheetPayload {
+  const daily = Array.from({ length: 7 }).map((_, i) => {
+    const date = new Date(Date.now() - (6 - i) * DAY_MS).toISOString().slice(0, 10)
+    const minutes = [0, 480, 450, 510, 420, 480, 60][i] ?? 0
+    return { date, minutes }
+  })
+  const totalMinutes = daily.reduce((a, b) => a + b.minutes, 0)
+  const todayMinutes = daily[daily.length - 1]?.minutes ?? 0
+  return {
+    today: { loggedMinutes: todayMinutes, targetMinutes: 480, remainingMinutes: Math.max(0, 480 - todayMinutes) },
+    week: {
+      totalMinutes,
+      daily,
+      byProject: [
+        { projectId: 'prj-core', projectName: 'Core Platform', minutes: 960 },
+        { projectId: 'prj-utec', projectName: 'UTEC', minutes: 720 },
+      ],
+    },
+    timer:
+      filters.sprintId !== 'all'
+        ? null
+        : {
+            id: 'timer-1',
+            projectId: 'prj-utec',
+            projectName: 'UTEC',
+            subProjectId: 'sprj-efa',
+            subProjectName: 'EFA',
+            workItemId: 'st-101',
+            workItemKey: 'EFA-142',
+            activity: 'Development',
+            startedAt: new Date(Date.now() - 37 * 60_000).toISOString(),
+            elapsedMinutes: 37,
+          },
+    status: totalMinutes < 120 ? 'missing' : 'draft',
+    entriesCount: 12,
+  }
+}
+
+function buildMyWork(): import('@/types/dashboard').MyWorkPayload {
+  const stories = [
+    { id: 'st-101', key: 'EFA-142', title: 'Implement timesheet approval workflow', projectId: 'prj-utec', projectName: 'UTEC', subProjectId: 'sprj-efa', subProjectName: 'EFA', sprintId: 'spr-efa-16', sprintName: 'Sprint 16', status: 'in_progress', priority: 'high', type: 'story' as const },
+    { id: 'st-102', key: 'EFA-143', title: 'Holiday calendar per location', projectId: 'prj-utec', projectName: 'UTEC', subProjectId: 'sprj-efa', subProjectName: 'EFA', sprintId: 'spr-efa-16', sprintName: 'Sprint 16', status: 'todo', priority: 'medium', type: 'story' as const },
+  ]
+  const bugs = [
+    { id: 'bug-11', key: 'EFA-142-B01', title: 'Timer drift on mobile Safari', projectId: 'prj-utec', projectName: 'UTEC', subProjectId: 'sprj-efa', subProjectName: 'EFA', status: 'open', priority: 'critical', type: 'bug' as const },
+  ]
+  const tasks = [
+    { id: 'task-1', key: 'EFA-142-T1', title: 'Write QA handoff notes', projectId: 'prj-utec', projectName: 'UTEC', subProjectId: 'sprj-efa', subProjectName: 'EFA', sprintId: 'spr-efa-16', sprintName: 'Sprint 16', status: 'todo', priority: 'medium', type: 'task' as const },
+  ]
+  return {
+    stories,
+    bugs,
+    tasks,
+    sprint: { id: 'spr-efa-16', name: 'Sprint 16', projectName: 'UTEC / EFA', startDate: new Date(Date.now() - 3 * DAY_MS).toISOString(), endDate: new Date(Date.now() + 11 * DAY_MS).toISOString(), assigned: 8, completed: 3, remaining: 5 },
+  }
+}
+
+function buildMyTeam(_filters: DashboardFilters): import('@/types/dashboard').MyTeamPayload {
+  return {
+    members: [
+      { id: 'user-kiran', name: 'Kiran Joshi', status: 'present', workload: 6 },
+      { id: 'user-neha', name: 'Neha Gupta', status: 'present', workload: 4 },
+      { id: 'user-lakshmi', name: 'Lakshmi Iyer', status: 'on_leave', workload: 0 },
+      { id: 'user-amit', name: 'Amit Verma', status: 'present', workload: 7 },
+    ],
+    attendance: { present: 3, absent: 0, onLeave: 1, late: 1 },
+    leave: { pending: 2, upcoming: 1 },
+    workload: [
+      { userId: 'user-kiran', name: 'Kiran Joshi', assigned: 6, completed: 2 },
+      { userId: 'user-neha', name: 'Neha Gupta', assigned: 4, completed: 3 },
+      { userId: 'user-amit', name: 'Amit Verma', assigned: 7, completed: 1 },
+    ],
+    timesheets: [
+      { userId: 'user-kiran', name: 'Kiran Joshi', hours: 38, status: 'submitted' },
+      { userId: 'user-neha', name: 'Neha Gupta', hours: 36, status: 'draft' },
+    ],
+    approvals: [
+      { id: 'ap-1', type: 'Leave', requester: 'Kiran Joshi', createdAt: new Date(Date.now() - 2 * 60_60_000).toISOString() },
+      { id: 'ap-2', type: 'Timesheet', requester: 'Neha Gupta', createdAt: new Date(Date.now() - 5 * 60_60_000).toISOString() },
+    ],
+  }
+}
+
+function buildManagement(scopedProjects: Project[]): import('@/types/dashboard').DashboardPayload['management'] {
+  return {
+    portfolio: scopedProjects.slice(0, 5).map((p) => ({ projectId: p.id, name: p.name, status: p.status, progress: p.progress, health: p.health })),
+    sprintHealth: [
+      { sprintId: 'spr-efa-16', name: 'Sprint 16', projectName: 'UTEC / EFA', planned: 42, completed: 18, remaining: 24 },
+      { sprintId: 'spr-utlite-9', name: 'Sprint 9', projectName: 'UTEC / UTLITE', planned: 34, completed: 28, remaining: 6 },
+    ],
+    peopleOverview: { total: 13, active: 11, newJoiners: 2, exits: 0 },
+  }
+}
+
+function buildActionCenter(scopedProjects: Project[], _filters: DashboardFilters): import('@/types/dashboard').ActionCenterItem[] {
+  const items: import('@/types/dashboard').ActionCenterItem[] = [
+    { id: 'ac-1', type: 'attendance', title: 'Check-in required', description: 'You are marked present since 09:32 — working 4h 32m', ctaLabel: 'View attendance', href: '/dashboard', priority: 'medium' },
+    { id: 'ac-2', type: 'timesheet', title: 'Timesheet missing', description: 'Weekly timesheet draft — 12 entries • 38.5h', ctaLabel: 'Open My Timesheet', href: '/timesheets/my', priority: 'high' },
+    { id: 'ac-3', type: 'approval', title: '2 approvals pending', description: 'Leave + Timesheet require your review', ctaLabel: 'View approvals', href: '/timesheets/approvals', priority: 'high', count: 2 },
+    { id: 'ac-4', type: 'bug', title: 'EFA-142-B01 assigned to you', description: 'Critical • Open • UTEC / EFA', ctaLabel: 'Open bug', href: '/projects/prj-utec', priority: 'high' },
+    { id: 'ac-5', type: 'story', title: '2 stories in progress', description: 'EFA-142, EFA-143 — Sprint 16', ctaLabel: 'Open My Work', href: '/projects/prj-utec', priority: 'medium' },
+    { id: 'ac-6', type: 'document', title: '2 documents need attention', description: 'Employment Contract • Salary Slip', ctaLabel: 'Open Documents', href: '/documents', priority: 'low' },
+  ]
+  if (scopedProjects.some((p) => p.health === 'at_risk')) {
+    items.push({ id: 'ac-7', type: 'approval', title: 'Project at risk', description: scopedProjects.find((p) => p.health === 'at_risk')?.name ?? 'Project', ctaLabel: 'View project', href: '/projects', priority: 'high' })
+  }
+  return items.slice(0, 6)
 }

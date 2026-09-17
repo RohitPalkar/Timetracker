@@ -9,6 +9,7 @@ import { mockDelay } from './http'
 
 export interface CreateBugInput {
   projectId: string
+  subProjectId?: string
   title: string
   description?: string
   severity: Bug['severity']
@@ -22,6 +23,7 @@ export interface UpdateBugInput extends Partial<CreateBugInput> {
 
 export interface BugListParams {
   projectId?: string
+  subProjectId?: string
   pageParams?: PageParams
   filters?: QueryFilter
   sort?: SortSpec
@@ -45,9 +47,19 @@ export const bugRepository = {
     const result = bugStore.query({
       search: params?.search,
       searchFields: ['key', 'title'],
-      filters: { ...params?.filters, projectId: params?.projectId },
+      filters: { ...params?.filters, projectId: params?.projectId, subProjectId: params?.subProjectId },
       sort: params?.sort ?? { field: 'updatedAt', direction: 'desc' },
       pageParams: params?.pageParams,
+    })
+    return { items: result.items, total: result.total }
+  },
+
+  async listByContext(context: { projectId: string; subProjectId?: string }): Promise<{ items: Bug[]; total: number }> {
+    await mockDelay(300)
+    const result = bugStore.query({
+      filters: { projectId: context.projectId },
+      match: (bug) => (context.subProjectId ? bug.subProjectId === context.subProjectId : !bug.subProjectId),
+      sort: { field: 'updatedAt', direction: 'desc' },
     })
     return { items: result.items, total: result.total }
   },

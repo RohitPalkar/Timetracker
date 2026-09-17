@@ -157,4 +157,40 @@ export const DEMO_PROJECT_MEMBERSHIPS: ProjectMembership[] = [
     capacity: 50,
     startedAt: daysAgo(35),
   },
+
+  // ---- Cross-context examples (same user, different role/team) ----
+  // Arjun: developer in EFA (Dev A), lead in UTLITE via shared team — demonstrates contextual role.
+  {
+    id: 'mem-utlite-arjun-shared',
+    userId: 'user-arjun',
+    projectId: 'prj-utec',
+    subProjectId: 'sprj-utlite',
+    teamId: 'team-utec-shared',
+    role: 'qa',
+    capacity: 40,
+    startedAt: daysAgo(30),
+  },
+  // Kiran: developer in EFA, also in shared team across both workstreams
+  {
+    id: 'mem-utlite-kiran-shared',
+    userId: 'user-kiran',
+    projectId: 'prj-utec',
+    subProjectId: 'sprj-utlite',
+    teamId: 'team-utec-shared',
+    role: 'developer',
+    capacity: 30,
+    startedAt: daysAgo(30),
+  },
+  // Lakshmi already demonstrates QA across both sub-projects with two memberships (EFA + UTLITE).
+  // Shared team membership for Lakshmi
+  {
+    id: 'mem-shared-lakshmi',
+    userId: 'user-lakshmi',
+    projectId: 'prj-utec',
+    subProjectId: 'sprj-efa',
+    teamId: 'team-utec-shared',
+    role: 'qa',
+    capacity: 30,
+    startedAt: daysAgo(28),
+  },
 ]

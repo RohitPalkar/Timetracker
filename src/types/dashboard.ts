@@ -1,10 +1,18 @@
 import type { ProjectHealth, Risk } from '@/types'
 
 /** Personas the dashboard is rendered for. Config-driven — never hardcoded in views. */
-export type DashboardPersona = 'super_admin' | 'project_manager' | 'business_analyst' | 'employee' | 'qa'
+export type DashboardPersona =
+  | 'super_admin'
+  | 'project_manager'
+  | 'business_analyst'
+  | 'employee'
+  | 'qa'
+  | 'hr_admin'
+  | 'finance'
+  | 'department_head'
 
 /** What slice of data a persona's dashboard is scoped to. */
-export type DashboardScope = 'organization' | 'managed_projects' | 'assigned_projects' | 'self' | 'qa_scope'
+export type DashboardScope = 'organization' | 'managed_projects' | 'assigned_projects' | 'self' | 'qa_scope' | 'hr_scope' | 'finance_scope'
 
 export type DashboardDateRange = '7d' | '30d' | '90d' | 'quarter' | 'year'
 
@@ -29,12 +37,19 @@ export type DashboardWidgetId =
   | 'timesheet-overview'
   | 'quality-trend'
   | 'org-activity'
+  // New workforce + operations groups (spec §4)
+  | 'action-center'
+  | 'my-hrms'
+  | 'my-timesheet'
+  | 'my-work'
+  | 'my-team'
+  | 'management-ops'
 
 export interface DashboardWidgetMeta {
   id: DashboardWidgetId
   title: string
   description?: string
-  section: 'core' | 'additional' | 'activity'
+  section: 'core' | 'additional' | 'activity' | 'attention' | 'hrms' | 'timesheet' | 'work' | 'team' | 'management'
   size: 'full' | 'half' | 'third'
 }
 
@@ -162,6 +177,158 @@ export interface DashboardActivityItem {
   createdAt: string
 }
 
+/* ------------------------------------------------------------------ */
+/*  Workforce / HRMS + Work + Team payloads (spec §7-15)             */
+/* ------------------------------------------------------------------ */
+
+export type AttendanceStatus = 'not_checked_in' | 'present' | 'checked_out' | 'absent' | 'on_leave' | 'holiday' | 'exception'
+
+export interface MyAttendance {
+  status: AttendanceStatus
+  checkIn?: string
+  checkOut?: string
+  workingMinutes?: number
+  exceptionLabel?: string
+}
+
+export interface LeaveBalance {
+  type: string
+  balance: number
+  pending: number
+  unit: 'days'
+}
+
+export interface LeaveRequestSummary {
+  id: string
+  type: string
+  from: string
+  to: string
+  days: number
+  status: 'pending' | 'approved' | 'rejected'
+}
+
+export interface MyLeave {
+  balances: LeaveBalance[]
+  pending: LeaveRequestSummary[]
+  upcoming: LeaveRequestSummary[]
+  history: LeaveRequestSummary[]
+}
+
+export interface HolidayItem {
+  date: string
+  name: string
+  calendar: string
+}
+
+export interface MyDocumentsSummary {
+  requiringAttention: number
+  expiringSoon: number
+  recent: Array<{ id: string; name: string; updatedAt: string }>
+}
+
+export interface MyAssetsSummary {
+  allocated: number
+  items: Array<{ id: string; name: string; type: string; status: string }>
+}
+
+export interface MyHRRequestsSummary {
+  pending: number
+  approved: number
+  rejected: number
+  items: Array<{ id: string; title: string; status: string; createdAt: string }>
+}
+
+export interface MyHRMSPayload {
+  attendance: MyAttendance
+  leave: MyLeave
+  holidays: HolidayItem[]
+  documents: MyDocumentsSummary
+  assets: MyAssetsSummary
+  hrRequests: MyHRRequestsSummary
+}
+
+export interface MyTimesheetToday {
+  loggedMinutes: number
+  targetMinutes?: number
+  remainingMinutes?: number
+}
+
+export interface MyTimesheetWeek {
+  totalMinutes: number
+  daily: Array<{ date: string; minutes: number }>
+  byProject: Array<{ projectId: string; projectName: string; minutes: number }>
+}
+
+export interface ActiveTimer {
+  id: string
+  projectId: string
+  projectName: string
+  subProjectId?: string
+  subProjectName?: string
+  workItemId: string
+  workItemKey: string
+  activity: string
+  startedAt: string
+  elapsedMinutes: number
+}
+
+export interface MyTimesheetPayload {
+  today: MyTimesheetToday
+  week: MyTimesheetWeek
+  timer: ActiveTimer | null
+  status: 'draft' | 'submitted' | 'approved' | 'rejected' | 'missing'
+  entriesCount: number
+}
+
+export interface MyWorkItem {
+  id: string
+  key: string
+  title: string
+  projectId: string
+  projectName: string
+  subProjectId?: string
+  subProjectName?: string
+  sprintId?: string
+  sprintName?: string
+  status: string
+  priority: string
+  type: 'story' | 'bug' | 'task'
+}
+
+export interface MyWorkPayload {
+  stories: MyWorkItem[]
+  bugs: MyWorkItem[]
+  tasks: MyWorkItem[]
+  sprint?: { id: string; name: string; projectName: string; startDate: string; endDate: string; assigned: number; completed: number; remaining: number }
+}
+
+export interface TeamMemberSummary {
+  id: string
+  name: string
+  status: AttendanceStatus
+  workload: number
+}
+
+export interface MyTeamPayload {
+  members: TeamMemberSummary[]
+  attendance: { present: number; absent: number; onLeave: number; late: number }
+  leave: { pending: number; upcoming: number }
+  workload: Array<{ userId: string; name: string; assigned: number; completed: number }>
+  timesheets: Array<{ userId: string; name: string; hours: number; status: string }>
+  approvals: Array<{ id: string; type: string; requester: string; createdAt: string }>
+}
+
+export interface ActionCenterItem {
+  id: string
+  type: 'attendance' | 'timesheet' | 'approval' | 'bug' | 'story' | 'leave' | 'document' | 'onboarding'
+  title: string
+  description: string
+  ctaLabel: string
+  href: string
+  priority: 'high' | 'medium' | 'low'
+  count?: number
+}
+
 export interface DashboardPayload {
   generatedAt: string
   kpis: DashboardKpi[]
@@ -176,6 +343,17 @@ export interface DashboardPayload {
   risks: DashboardRisk[]
   alerts: DashboardAlert[]
   activity: DashboardActivityItem[]
+  // New groups
+  actionCenter: ActionCenterItem[]
+  myHRMS: MyHRMSPayload
+  myTimesheet: MyTimesheetPayload
+  myWork: MyWorkPayload
+  myTeam: MyTeamPayload | null
+  management: {
+    portfolio: Array<{ projectId: string; name: string; status: string; progress: number; health: string }>
+    sprintHealth: Array<{ sprintId: string; name: string; projectName: string; planned: number; completed: number; remaining: number }>
+    peopleOverview?: { total: number; active: number; newJoiners: number; exits: number }
+  } | null
 }
 
 export interface DashboardFilterOptions {

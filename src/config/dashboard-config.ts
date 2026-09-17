@@ -21,6 +21,12 @@ export const DASHBOARD_WIDGETS: Record<DashboardWidgetId, DashboardWidgetMeta> =
   'timesheet-overview': { id: 'timesheet-overview', title: 'Timesheet Overview', description: 'Submission health and utilization', section: 'additional', size: 'third' },
   'quality-trend': { id: 'quality-trend', title: 'Quality / Bug Trend', description: 'Bugs created, resolved and critical backlog', section: 'additional', size: 'full' },
   'org-activity': { id: 'org-activity', title: 'Organization Activity', description: 'Risks, alerts and recent activity', section: 'activity', size: 'full' },
+  'action-center': { id: 'action-center', title: 'Attention & Actions', description: 'What needs your attention now', section: 'attention', size: 'full' },
+  'my-hrms': { id: 'my-hrms', title: 'My HRMS', description: 'Attendance, leave, holidays, documents, assets, requests', section: 'hrms', size: 'full' },
+  'my-timesheet': { id: 'my-timesheet', title: 'My Timesheet', description: 'Today, week, timer and status', section: 'timesheet', size: 'full' },
+  'my-work': { id: 'my-work', title: 'My Work', description: 'Stories, bugs, tasks and sprint', section: 'work', size: 'full' },
+  'my-team': { id: 'my-team', title: 'My Team', description: 'Team members, attendance, leave, workload, timesheets, approvals', section: 'team', size: 'full' },
+  'management-ops': { id: 'management-ops', title: 'Management & Operations', description: 'Portfolio, sprint health, people and payroll operations', section: 'management', size: 'full' },
 }
 
 export const DASHBOARD_PERSONAS: Record<DashboardPersona, DashboardPersonaConfig> = {
@@ -32,6 +38,12 @@ export const DASHBOARD_PERSONAS: Record<DashboardPersona, DashboardPersonaConfig
     scope: 'organization',
     filters: { project: true, team: true, dateRange: true, sprint: true },
     widgets: [
+      'action-center',
+      'my-hrms',
+      'my-timesheet',
+      'my-work',
+      'my-team',
+      'management-ops',
       'kpi',
       'planned-vs-actual',
       'top-bug-owners',
@@ -51,7 +63,7 @@ export const DASHBOARD_PERSONAS: Record<DashboardPersona, DashboardPersonaConfig
     description: 'Progress and health across the projects you manage.',
     scope: 'managed_projects',
     filters: { project: true, team: false, dateRange: true, sprint: true },
-    widgets: ['kpi', 'planned-vs-actual', 'budget-consumption', 'project-health', 'sprint-trend', 'timesheet-overview', 'org-activity'],
+    widgets: ['action-center', 'my-hrms', 'my-timesheet', 'my-work', 'my-team', 'management-ops', 'kpi', 'planned-vs-actual', 'budget-consumption', 'project-health', 'sprint-trend', 'timesheet-overview', 'org-activity'],
   },
   business_analyst: {
     persona: 'business_analyst',
@@ -60,7 +72,7 @@ export const DASHBOARD_PERSONAS: Record<DashboardPersona, DashboardPersonaConfig
     description: 'Backlog health, scope and requirements delivery.',
     scope: 'assigned_projects',
     filters: { project: true, team: false, dateRange: true, sprint: true },
-    widgets: ['kpi', 'planned-vs-actual', 'quality-trend', 'project-health', 'org-activity'],
+    widgets: ['action-center', 'my-hrms', 'my-timesheet', 'my-work', 'quality-trend', 'project-health', 'org-activity'],
   },
   employee: {
     persona: 'employee',
@@ -69,7 +81,7 @@ export const DASHBOARD_PERSONAS: Record<DashboardPersona, DashboardPersonaConfig
     description: 'Your work, hours and capacity at a glance.',
     scope: 'self',
     filters: { project: false, team: false, dateRange: true, sprint: true },
-    widgets: ['kpi', 'planned-vs-actual', 'hours-by-employee', 'timesheet-overview', 'org-activity'],
+    widgets: ['action-center', 'my-hrms', 'my-timesheet', 'my-work', 'org-activity'],
   },
   qa: {
     persona: 'qa',
@@ -78,7 +90,34 @@ export const DASHBOARD_PERSONAS: Record<DashboardPersona, DashboardPersonaConfig
     description: 'Bugs, verification queues and quality signals.',
     scope: 'qa_scope',
     filters: { project: true, team: false, dateRange: true, sprint: true },
-    widgets: ['kpi', 'top-bug-owners', 'quality-trend', 'project-health', 'org-activity'],
+    widgets: ['action-center', 'my-hrms', 'my-timesheet', 'my-work', 'top-bug-owners', 'quality-trend', 'project-health', 'org-activity'],
+  },
+  hr_admin: {
+    persona: 'hr_admin',
+    label: 'HR Admin',
+    title: 'HR Operations Dashboard',
+    description: 'Workforce, attendance, leave, onboarding and HR operations.',
+    scope: 'hr_scope',
+    filters: { project: false, team: true, dateRange: true, sprint: false },
+    widgets: ['action-center', 'my-hrms', 'my-timesheet', 'my-work', 'my-team', 'management-ops', 'kpi', 'org-activity'],
+  },
+  finance: {
+    persona: 'finance',
+    label: 'Finance / Payroll',
+    title: 'Finance Dashboard',
+    description: 'Payroll operations, compensation and workforce cost.',
+    scope: 'finance_scope',
+    filters: { project: false, team: false, dateRange: true, sprint: false },
+    widgets: ['action-center', 'my-hrms', 'my-timesheet', 'my-work', 'management-ops', 'org-activity'],
+  },
+  department_head: {
+    persona: 'department_head',
+    label: 'Department Head',
+    title: 'Department Dashboard',
+    description: 'Department employees, attendance, leave and delivery.',
+    scope: 'assigned_projects',
+    filters: { project: true, team: true, dateRange: true, sprint: true },
+    widgets: ['action-center', 'my-hrms', 'my-timesheet', 'my-work', 'my-team', 'management-ops', 'org-activity'],
   },
 }
 
@@ -91,6 +130,9 @@ const PERSONA_BY_ROLE: Record<string, DashboardPersona> = {
   'role-business_analyst': 'business_analyst',
   'role-team_lead': 'qa',
   'role-employee': 'employee',
+  'role-hr': 'hr_admin',
+  'role-finance': 'finance',
+  'role-qa': 'qa',
 }
 
 export function personaForRole(roleId?: string): DashboardPersona {
