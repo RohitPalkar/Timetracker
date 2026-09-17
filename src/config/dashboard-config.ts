@@ -123,6 +123,7 @@ export const DASHBOARD_PERSONAS: Record<DashboardPersona, DashboardPersonaConfig
 
 /** Role → persona mapping. Defaults to employee when a role has no dashboard persona. */
 const PERSONA_BY_ROLE: Record<string, DashboardPersona> = {
+  'role-super_admin': 'super_admin',
   'role-org_admin': 'super_admin',
   'role-delivery_manager': 'project_manager',
   'role-delivery': 'project_manager',

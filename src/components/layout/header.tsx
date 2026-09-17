@@ -15,9 +15,10 @@ import { SearchBox } from '@/components/common/search-box'
 import { UserAvatar } from '@/components/common/user-avatar'
 import { QuickCreate } from '@/components/common/quick-create'
 import { NotificationsDrawer } from '@/components/common/notifications-drawer'
+import { useQueryClient } from '@tanstack/react-query'
 import { useCommandPalette } from '@/store/command-palette'
 import { useAuth } from '@/store/auth'
-import { APP_NAME, DEFAULT_ORG } from '@/constants'
+import { APP_NAME } from '@/constants'
 
 interface HeaderProps {
   onMenuClick: () => void
@@ -25,13 +26,23 @@ interface HeaderProps {
 
 export function Header({ onMenuClick }: HeaderProps) {
   const { setOpen } = useCommandPalette()
-  const { authUser, signOut } = useAuth()
+  const { authUser, user, activeOrganization, signOut } = useAuth()
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [notificationsOpen, setNotificationsOpen] = React.useState(false)
 
   const handleSignOut = async () => {
-    await signOut()
-    navigate('/login')
+    try {
+      await signOut()
+    } finally {
+      queryClient.clear()
+      // Replace history so back button cannot expose authenticated content (§22)
+      navigate('/login', { replace: true })
+      // Force reload-safe clearing: ensure no stale data flashes after logout
+      window.setTimeout(() => {
+        if (window.location.pathname !== '/login') window.location.replace('/login')
+      }, 50)
+    }
   }
 
   return (
@@ -49,7 +60,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         </span>
         <span className="flex flex-col leading-tight">
           <span className="text-sm font-semibold tracking-tight text-foreground">{APP_NAME}</span>
-          <span className="text-[11px] text-muted-foreground">{DEFAULT_ORG}</span>
+          <span className="text-[11px] text-muted-foreground">{activeOrganization?.name ?? 'Workspace'}</span>
         </span>
       </div>
 
@@ -105,10 +116,15 @@ export function Header({ onMenuClick }: HeaderProps) {
             <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden="true" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel>
-            <span className="block text-[13px] font-medium">{authUser?.name ?? 'Guest'}</span>
-            <span className="block text-xs font-normal text-muted-foreground">{authUser?.email}</span>
+            <span className="block text-[13px] font-medium">{user?.name ?? authUser?.name ?? 'Guest'}</span>
+            <span className="block text-xs font-normal text-muted-foreground">{user?.email ?? authUser?.email}</span>
+            {activeOrganization && (
+              <span className="mt-1 block text-xs font-normal text-muted-foreground">
+                {activeOrganization.name} · {(authUser as unknown as { designation?: string })?.designation ?? 'Super Admin'}
+              </span>
+            )}
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => navigate('/settings/profile')}>
@@ -122,7 +138,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={handleSignOut} className="text-danger focus:bg-danger/10 focus:text-danger">
             <LogOut className="size-4" aria-hidden="true" />
-            Sign out
+            Logout
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

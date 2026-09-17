@@ -1,5 +1,5 @@
 import { Outlet } from 'react-router'
-import { APP_NAME, DEFAULT_ORG } from '@/constants'
+import { APP_NAME, APP_TAGLINE, DEFAULT_ORG } from '@/constants'
 
 export function AuthLayout() {
   return (
@@ -18,7 +18,7 @@ export function AuthLayout() {
             </svg>
           </span>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">{APP_NAME}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{DEFAULT_ORG}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{APP_TAGLINE}</p>
         </div>
 
         <main className="rounded-3xl border border-border bg-surface p-6 shadow-lg sm:p-8">

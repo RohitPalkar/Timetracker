@@ -4,8 +4,8 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SidebarNav } from '@/components/navigation/sidebar-nav'
 import { UserAvatar } from '@/components/common/user-avatar'
-import { NAV_GROUPS } from '@/config/navigation'
-import { APP_NAME, DEFAULT_ORG, SIDEBAR_STORAGE_KEY } from '@/constants'
+import { getFilteredNavGroups } from '@/config/navigation'
+import { APP_NAME, SIDEBAR_STORAGE_KEY } from '@/constants'
 import { useAuth } from '@/store/auth'
 import { cn } from '@/lib/utils'
 
@@ -18,13 +18,14 @@ interface SidebarProps {
 
 export function Sidebar({ variant = 'desktop', collapsed, onCollapsedChange, onNavigate }: SidebarProps) {
   const { pathname } = useLocation()
-  const { authUser } = useAuth()
+  const { authUser, permissions, can, activeOrganization } = useAuth()
+  const groups = getFilteredNavGroups(permissions, can)
 
   if (variant === 'mobile') {
     return (
       <div className="flex h-full w-[272px] flex-col border-r border-border bg-sidebar">
-        <SidebarBrand collapsed={false} />
-        <SidebarNav groups={NAV_GROUPS} activePath={pathname} onNavigate={onNavigate} />
+        <SidebarBrand collapsed={false} activeOrgName={activeOrganization?.name} />
+        <SidebarNav groups={groups} activePath={pathname} onNavigate={onNavigate} />
         <SidebarFooter authUser={authUser} collapsed={false} />
       </div>
     )
@@ -37,15 +38,15 @@ export function Sidebar({ variant = 'desktop', collapsed, onCollapsedChange, onN
         collapsed ? 'w-[76px]' : 'w-[272px]',
       )}
     >
-      <SidebarBrand collapsed={collapsed} />
-      <SidebarNav groups={NAV_GROUPS} collapsed={collapsed} activePath={pathname} onNavigate={onNavigate} />
+      <SidebarBrand collapsed={collapsed} activeOrgName={activeOrganization?.name} />
+      <SidebarNav groups={groups} collapsed={collapsed} activePath={pathname} onNavigate={onNavigate} />
       <SidebarFooter authUser={authUser} collapsed={collapsed} />
       <CollapseToggle collapsed={collapsed} onCollapsedChange={onCollapsedChange} />
     </aside>
   )
 }
 
-function SidebarBrand({ collapsed }: { collapsed: boolean }) {
+function SidebarBrand({ collapsed, activeOrgName }: { collapsed: boolean; activeOrgName?: string | null }) {
   return (
     <div className={cn('flex h-[72px] items-center gap-2.5 border-b border-sidebar-border px-4', collapsed && 'justify-center px-0')}>
       {collapsed ? (
@@ -58,7 +59,7 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
               </svg>
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="right">{APP_NAME}</TooltipContent>
+          <TooltipContent side="right">{activeOrgName ?? APP_NAME}</TooltipContent>
         </Tooltip>
       ) : (
         <Link to="/dashboard" className="flex items-center gap-2.5 focus-visible:outline-2 focus-visible:outline-ring-focus">
@@ -70,7 +71,7 @@ function SidebarBrand({ collapsed }: { collapsed: boolean }) {
           </span>
           <span className="flex min-w-0 flex-col leading-tight">
             <span className="truncate text-[15px] font-semibold tracking-tight text-sidebar-foreground">{APP_NAME}</span>
-            <span className="truncate text-[11px] text-sidebar-muted">{DEFAULT_ORG}</span>
+            <span className="truncate text-[11px] text-sidebar-muted">{activeOrgName ?? 'Workspace'}</span>
           </span>
         </Link>
       )}

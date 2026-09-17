@@ -1,10 +1,15 @@
 export const APP_NAME = 'MyTracker'
-export const APP_TAGLINE = 'Enterprise Project Management'
-export const DEFAULT_ORG = 'Acme Digital'
+export const APP_TAGLINE = 'Workforce & Work Operations Platform'
+export const DEFAULT_ORG = 'Acme Technologies'
+export const DEMO_SUPER_ADMIN_EMAIL = 'demo@mytracker.local'
 export const OTP_DEMO_HINT = '123456'
+export const OTP_LENGTH = 6
+export const OTP_EXPIRY_MINUTES = 10
 export const SESSION_STORAGE_KEY = 'mytracker.session'
 export const PENDING_EMAIL_KEY = 'mytracker.pending-email'
+export const ACTIVE_ORG_KEY = 'mytracker.active-org'
 export const SIDEBAR_STORAGE_KEY = 'mytracker.sidebar'
 export const SESSION_LOAD_MS = 1400
 export const RESEND_COOLDOWN_SECONDS = 30
 export const MAX_LIST_PAGE_SIZE = 500
+export const MAX_OTP_ATTEMPTS = 5

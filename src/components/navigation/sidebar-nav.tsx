@@ -10,6 +10,8 @@ export interface NavItem {
   badge?: number
   disabled?: boolean
   end?: boolean
+  /** Required capability — if set, sidebar filters this item when caller lacks it. */
+  permission?: import('@/types/permission').PermissionKey | import('@/types/permission').PermissionKey[]
 }
 
 export interface NavGroup {

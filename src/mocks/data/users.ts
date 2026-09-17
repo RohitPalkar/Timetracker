@@ -6,7 +6,7 @@ export const daysFromNow = (days: number): string => new Date(Date.now() + days 
 
 export const DEMO_ORGANIZATION: Organization = {
   id: 'org-acme',
-  name: 'Acme Digital',
+  name: 'Acme Technologies',
   plan: 'growth',
   seatsUsed: 13,
   seatsTotal: 25,

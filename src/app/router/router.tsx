@@ -6,6 +6,8 @@ import { ProtectedRoute, PublicOnlyRoute } from '@/app/router/guards'
 import { LoginPage } from '@/features/auth/login-page'
 import { VerifyPage } from '@/features/auth/verify-page'
 import { SessionPage } from '@/features/auth/session-page'
+import { OrganizationSelectPage } from '@/features/auth/organization-select-page'
+import { AccessDeniedPage } from '@/features/auth/access-denied-page'
 import { DashboardPage } from '@/features/dashboard/dashboard-page'
 import { ProjectsListPage } from '@/features/projects/pages/projects-list-page'
 import { RequireProjectCreate } from '@/features/projects/components/require-project-create'
@@ -69,6 +71,7 @@ export const router = createBrowserRouter([
     element: <BlankLayout />,
     errorElement: <NotFoundPage />,
     children: [
+      // ── Public — unauthenticated only ─────────────────────────────
       {
         element: <PublicOnlyRoute />,
         children: [
@@ -79,12 +82,22 @@ export const router = createBrowserRouter([
               { path: '/verify', element: <VerifyPage /> },
             ],
           },
-          { path: '/session', element: <SessionPage /> },
         ],
       },
+      // ── Protected — authenticated only ────────────────────────────
       {
         element: <ProtectedRoute />,
         children: [
+          // Session bootstrap & org selection — no sidebar, just AuthLayout
+          { path: '/session', element: <SessionPage /> },
+          {
+            element: <AuthLayout />,
+            children: [{ path: '/select-organization', element: <OrganizationSelectPage /> }],
+          },
+          // Top-level forbidden
+          { path: '/403', element: <AccessDeniedPage /> },
+
+          // Main shell
           {
             element: <DashboardLayout />,
             children: [
@@ -178,6 +191,9 @@ export const router = createBrowserRouter([
               { path: '/admin', element: <AdministrationPage /> },
               { path: '/settings', element: <SettingsPage /> },
               { path: '/settings/profile', element: <ProfileSettingsPage /> },
+
+              // Forbidden inside shell (permission guard fallback)
+              { path: '/access-denied', element: <AccessDeniedPage /> },
             ],
           },
         ],
