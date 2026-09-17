@@ -27,6 +27,7 @@ interface AuthState {
 
   // Actions — public API matches future REST contracts
   initialize: () => Promise<void>
+  login: (email: string, password: string) => Promise<{ ok: boolean; error?: string; code?: string }>
   requestOtp: (email: string) => Promise<OtpRequestResult>
   verifyOtp: (email: string, code: string) => Promise<{ ok: boolean; error?: string; code?: string }>
   resendOtp: (email: string) => Promise<OtpRequestResult>
@@ -127,6 +128,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       isAuthenticated: true,
       initialized: true,
     })
+  },
+
+  login: async (email, password) => {
+    const result = await authService.login(email, password)
+    if (!result.ok) return result
+    const session = authService.getSession()
+    set({
+      authUser: session,
+      ...toDerived(session),
+      status: 'authenticated',
+      isAuthenticated: true,
+      pendingEmail: '',
+      isLoading: false,
+      initialized: true,
+    })
+    return result
   },
 
   requestOtp: async (email) => {
@@ -254,6 +271,7 @@ export function useAuth() {
   const initialized = useAuthStore((s) => s.initialized)
   const pendingEmail = useAuthStore((s) => s.pendingEmail)
   const initialize = useAuthStore((s) => s.initialize)
+  const login = useAuthStore((s) => s.login)
   const requestOtp = useAuthStore((s) => s.requestOtp)
   const verifyOtp = useAuthStore((s) => s.verifyOtp)
   const resendOtp = useAuthStore((s) => s.resendOtp)
@@ -278,6 +296,7 @@ export function useAuth() {
     initialized,
     pendingEmail,
     initialize,
+    login,
     requestOtp,
     verifyOtp,
     resendOtp,

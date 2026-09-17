@@ -3,45 +3,44 @@ import { useNavigate } from 'react-router'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Mail, ShieldCheck } from 'lucide-react'
+import { Mail, Lock, ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { TextField } from '@/components/forms/text-field'
 import { useAuth } from '@/store/auth'
-import { APP_NAME, APP_TAGLINE, DEMO_SUPER_ADMIN_EMAIL, OTP_DEMO_HINT } from '@/constants'
+import { APP_NAME, APP_TAGLINE, DEMO_SUPER_ADMIN_EMAIL } from '@/constants'
+import { DEMO_PASSWORD } from '@/services/auth'
 
 const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, 'Work email is required')
-    .email('Enter a valid work email address')
-    .transform((v) => v.trim().toLowerCase()),
+  email: z.string().min(1, 'Work email is required').email('Enter a valid work email address').transform((v) => v.trim().toLowerCase()),
+  password: z.string().min(1, 'Password is required').min(6, 'Password must be at least 6 characters'),
 })
 
 type LoginValues = z.infer<typeof loginSchema>
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { requestOtp } = useAuth()
+  const { login } = useAuth()
   const [submitting, setSubmitting] = React.useState(false)
   const [serverError, setServerError] = React.useState<string | null>(null)
+  const [showPassword, setShowPassword] = React.useState(false)
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '' },
+    defaultValues: { email: '', password: '' },
   })
 
   const onSubmit = async (values: LoginValues) => {
     setSubmitting(true)
     setServerError(null)
     try {
-      const result = await requestOtp(values.email)
+      const result = await login(values.email, values.password)
       if (result.ok) {
-        navigate('/verify')
+        navigate('/dashboard', { replace: true })
       } else {
-        // Keep email, show server error inline on field
-        const msg = result.error ?? 'Could not send the code. Please try again.'
-        if (msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('email')) {
-          form.setError('email', { message: msg })
+        const msg = result.error ?? 'Invalid email or password'
+        // Show field error for auth failures
+        if (msg.toLowerCase().includes('email') || msg.toLowerCase().includes('password') || msg.toLowerCase().includes('invalid')) {
+          form.setError('password', { message: msg })
         } else {
           setServerError(msg)
         }
@@ -55,12 +54,11 @@ export function LoginPage() {
 
   const fillDemo = () => {
     form.setValue('email', DEMO_SUPER_ADMIN_EMAIL, { shouldValidate: true })
-    form.setFocus('email')
+    form.setValue('password', DEMO_PASSWORD, { shouldValidate: true })
   }
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Branding — spec §5/7: MyTracker + positioning, no persona selector */}
       <div className="text-center">
         <h2 className="text-[22px] font-semibold tracking-tight text-foreground">{APP_NAME}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{APP_TAGLINE}</p>
@@ -77,6 +75,26 @@ export function LoginPage() {
           autoFocus
           leftSlot={<Mail className="size-4" aria-hidden="true" />}
         />
+        <TextField
+          name="password"
+          control={form.control}
+          label="Password"
+          placeholder="••••••••"
+          type={showPassword ? 'text' : 'password'}
+          autoComplete="current-password"
+          leftSlot={<Lock className="size-4" aria-hidden="true" />}
+          rightSlot={
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="pointer-events-auto text-muted-foreground hover:text-foreground"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              tabIndex={-1}
+            >
+              {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+            </button>
+          }
+        />
 
         {serverError && (
           <div className="rounded-xl border border-danger/20 bg-danger/5 px-3 py-2.5" role="alert">
@@ -85,21 +103,15 @@ export function LoginPage() {
         )}
 
         <Button type="submit" size="lg" className="mt-1 w-full" loading={submitting} disabled={submitting}>
-          Continue
+          Log in
         </Button>
-
-        <p className="text-center text-xs text-muted-foreground">
-          We&apos;ll send a 6-digit code to verify your email.
-        </p>
       </form>
 
-      {/* Demo hint — isolated to demo env, not cluttering primary flow */}
       <div className="rounded-xl border border-dashed border-primary/30 bg-primary-soft/40 px-4 py-3">
         <p className="flex items-center justify-center gap-1.5 text-center text-xs text-primary">
           <ShieldCheck className="size-3.5 shrink-0" aria-hidden="true" />
           <span>
-            Demo — use <span className="font-mono font-semibold">{DEMO_SUPER_ADMIN_EMAIL}</span> · OTP{' '}
-            <span className="font-mono font-semibold">{OTP_DEMO_HINT}</span>
+            Demo — <span className="font-mono font-semibold">{DEMO_SUPER_ADMIN_EMAIL}</span> · <span className="font-mono font-semibold">{DEMO_PASSWORD}</span>
           </span>
         </p>
         <button
@@ -111,9 +123,7 @@ export function LoginPage() {
         </button>
       </div>
 
-      <p className="text-center text-xs text-muted-foreground">
-        By continuing you agree to {APP_NAME}&apos;s terms of service.
-      </p>
+      <p className="text-center text-xs text-muted-foreground">By continuing you agree to {APP_NAME}&apos;s terms of service.</p>
     </div>
   )
 }
