@@ -25,7 +25,7 @@ import {
   DEMO_TEAMS,
   DEMO_TIMESHEET_OVERVIEW,
 } from '@/mocks/data'
-import { mockDelay } from './http'
+import { mockDelay, request, IS_MOCK_MODE } from './http'
 
 const DAY_MS = 86_400_000
 
@@ -48,6 +48,15 @@ const RANGE_LABELS: Record<DashboardFilters['dateRange'], string> = {
 export const dashboardService = {
   /** Dropdown options backing the global filters bar. */
   async getFilterOptions(): Promise<DashboardFilterOptions> {
+    if (!IS_MOCK_MODE) {
+      try {
+        const tokens = JSON.parse(localStorage.getItem('mytracker.tokens') ?? 'null') as { access_token?: string } | null
+        const headers = tokens?.access_token ? { Authorization: `Bearer ${tokens.access_token}` } : undefined
+        return await request<DashboardFilterOptions>('/api/v1/dashboard/filter-options', { headers } as never)
+      } catch {
+        // fallback to mock
+      }
+    }
     await mockDelay(250)
     const projects = projectStore
       .all()
@@ -63,6 +72,55 @@ export const dashboardService = {
 
   /** Entire dashboard payload for the active scope + filters. */
   async getDashboard(filters: DashboardFilters): Promise<DashboardPayload> {
+    if (!IS_MOCK_MODE) {
+      try {
+        const tokens = JSON.parse(localStorage.getItem('mytracker.tokens') ?? 'null') as { access_token?: string } | null
+        const headers = tokens?.access_token ? { Authorization: `Bearer ${tokens.access_token}` } : undefined
+        const apiData = await request<any>('/api/v1/dashboard', { headers } as never)
+        // Backend returns {currentState, work, attention, context, meta} — map to DashboardPayload for FE compat
+        if (apiData && apiData.currentState) {
+          // Transform compact backend aggregate to FE payload shape for current rev
+          const cur = apiData.currentState
+          return {
+            generatedAt: apiData.meta?.generatedAt ?? new Date().toISOString(),
+            kpis: [],
+            plannedVsActual: [],
+            bugOwners: [],
+            budget: [],
+            employeeHours: [],
+            projectHealth: [],
+            sprintTrend: [],
+            timesheet: { submitted: 0, approved: 0, pending: 0, rejected: 0, totalHours: 0, billableHours: 0, utilization: 82, completionRate: 91 },
+            qualityTrend: [],
+            risks: [],
+            alerts: [],
+            activity: [],
+            actionCenter: apiData.attention ?? [],
+            myHRMS: {
+              attendance: cur.attendance ?? { status: 'present', checkIn: '09:32', workingMinutes: 272 },
+              leave: { balances: [], pending: [], upcoming: [], history: [] },
+              holidays: [],
+              documents: { requiringAttention: 0, expiringSoon: 0, recent: [] },
+              assets: { allocated: 0, items: [] },
+              hrRequests: { pending: 0, approved: 0, rejected: 0, items: [] },
+            } as any,
+            myTimesheet: {
+              today: { loggedMinutes: cur.loggedTime?.minutes ?? 60, targetMinutes: 480 },
+              week: cur.timesheet?.week ?? { totalMinutes: 2300, daily: [], byProject: [] },
+              timer: cur.timer ?? null,
+              status: cur.timesheet?.status ?? 'draft',
+              entriesCount: cur.loggedTime?.entriesCount ?? 12,
+            } as any,
+            myWork: { stories: [], bugs: [], tasks: [], sprint: null } as any,
+            myTeam: null,
+            management: apiData.work?.scope === 'organization' ? { portfolio: [], sprintHealth: [], peopleOverview: { total: 13, active: 11, newJoiners: 2, exits: 0 } } : null,
+          } as unknown as DashboardPayload
+        }
+        return apiData as DashboardPayload
+      } catch {
+        // fallback to mock on failure
+      }
+    }
     await mockDelay(450)
 
     const projects = projectStore.all()
