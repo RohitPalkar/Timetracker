@@ -5,7 +5,8 @@ import { getSupabaseService } from './client.js'
 async function run() {
   const svc = getSupabaseService()
   if (!svc) { console.log('[migrate] Skipping — Supabase not configured (mock mode)'); return }
-  const dir = path.resolve('src/db/migrations')
+  // Canonical migrations now live in supabase/migrations (Supabase CLI)
+  const dir = path.resolve('../supabase/migrations')
   const files = fs.readdirSync(dir).filter(f => f.endsWith('.sql')).sort()
   for (const file of files) {
     const sql = fs.readFileSync(path.join(dir, file), 'utf8')

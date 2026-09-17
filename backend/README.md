@@ -2,28 +2,34 @@
 
 Fastify + TypeScript + Supabase (Auth + PostgreSQL).
 
+**Canonical DB migrations are in `supabase/migrations/`** (Supabase CLI). `backend/src/db/` only contains the runtime Supabase client; it does not own schema.
+
 ## Quick start
 
 1. Copy env:
    ```sh
-   cp .env.example .env
-   # fill SUPABASE_URL / ANON_KEY / SERVICE_ROLE_KEY when Supabase project exists
+   cp backend/.env.example backend/.env  # if exists, else create from root .env.example
+   # fill SUPABASE_URL / PUBLISHABLE_KEY / SECRET_KEY (or legacy ANON/SERVICE) 
    # leave blank to run in mock mode (demo@mytracker.local / 123456)
    ```
+   New Supabase projects use `SUPABASE_PUBLISHABLE_KEY` (browser) and `SUPABASE_SECRET_KEY` (server). Legacy `SUPABASE_ANON_KEY`/`SERVICE_ROLE_KEY` still work but are deprecated 2026.
 
 2. Install:
    ```sh
-   npm install
+   cd backend && npm install
    ```
 
-3. Run DB (when Supabase configured):
+3. Supabase CLI (canonical):
    ```sh
-   # Apply migrations in Supabase SQL editor: src/db/migrations/001_init.sql
-   # Then seed: src/db/seeds/001_seed.sql
-   # Or via helper (requires exec_sql rpc)
-   npm run db:migrate
-   npm run db:seed
+   supabase init       # creates supabase/config.toml
+   supabase login      # browser
+   supabase link --project-ref <REF>  # from Dashboard URL
+   supabase migration list   # verify
+   supabase db push --dry-run
+   supabase db push
    ```
+
+   Migrations live in `supabase/migrations/` and seed in `supabase/seed.sql`.
 
 4. Start API:
    ```sh
