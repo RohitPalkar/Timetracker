@@ -6,9 +6,20 @@
 import type { Milestone, Project, ProjectActivity, ProjectMember, ProjectMemberRole, ProjectScope, ProjectStatus, ProjectType, SubProject, Team, User } from '@/types'
 import type { PageParams, SortSpec } from '@/types/api'
 import { projectActivityStore, projectMemberStore, projectStore, milestoneStore, subProjectStore, teamStore, userStore } from './stores'
-import { ApiError, mockDelay } from './http'
+import { ApiError, mockDelay, request, IS_MOCK_MODE } from './http'
 import { projectMemberKey } from '@/mocks/data'
 import { uid } from '@/lib/utils'
+
+function authHeaders(): Record<string, string> {
+  try {
+    const raw = localStorage.getItem('mytracker.tokens')
+    if (!raw) return {}
+    const t = JSON.parse(raw) as { access_token?: string }
+    return t?.access_token ? { Authorization: `Bearer ${t.access_token}` } : {}
+  } catch {
+    return {}
+  }
+}
 
 export interface CreateProjectInput {
   name: string
@@ -165,6 +176,22 @@ export const projectService = {
   async list(
     params?: Partial<ProjectListParams>,
   ): Promise<{ items: ProjectListItem[]; total: number; scopeTotal: number }> {
+    if (!IS_MOCK_MODE) {
+      try {
+        const headers = authHeaders()
+        const qs = new URLSearchParams()
+        if (params?.search) qs.set('search', params.search)
+        if (params?.statuses?.length) qs.set('status', params.statuses[0])
+        const items = await request<any[]>(`/api/v1/projects?${qs.toString()}`, { headers } as any)
+        const mapped = (items as any[]).map((p:any)=>({
+          ...p,
+          managerName: p.manager_ids?.[0] ? (p.manager_ids[0] as string) : 'Unassigned',
+          memberCount: p.member_count ?? 0,
+          memberUsers: [],
+        })) as ProjectListItem[]
+        return { items: mapped, total: mapped.length, scopeTotal: mapped.length }
+      } catch {}
+    }
     await mockDelay(320)
     const pageParams = params ? { page: params.page ?? 1, pageSize: params.pageSize ?? 20 } : undefined
 

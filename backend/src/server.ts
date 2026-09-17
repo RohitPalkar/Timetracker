@@ -3,6 +3,8 @@ import cors from '@fastify/cors'
 import { env } from './config/env.js'
 import { authRoutes } from './modules/auth/routes.js'
 import { dashboardRoutes } from './modules/dashboard/routes.js'
+import { projectRoutes } from './modules/projects/routes.js'
+import { teamRoutes } from './modules/teams/routes.js'
 
 const app = Fastify({ logger: true })
 
@@ -31,6 +33,8 @@ app.get('/health', async () => {
 
 await authRoutes(app)
 await dashboardRoutes(app)
+await projectRoutes(app)
+await teamRoutes(app)
 
 // Central error handler
 app.setErrorHandler((err: any, _req, reply) => {
