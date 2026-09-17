@@ -7,7 +7,19 @@ import { dashboardRoutes } from './modules/dashboard/routes.js'
 const app = Fastify({ logger: true })
 
 await app.register(cors, {
-  origin: env.corsOrigins.length ? env.corsOrigins : true,
+  origin: (origin: string | undefined, cb: (err: Error | null, allow: boolean) => void) => {
+    // Allow same-origin / non-browser requests
+    if (!origin) return cb(null, true)
+    // Wildcard allow
+    if (env.corsOrigins.includes('*')) return cb(null, true)
+    // Exact match
+    if (env.corsOrigins.includes(origin)) return cb(null, true)
+    // Allow any Vercel preview/production deployment
+    if (origin.endsWith('.vercel.app')) return cb(null, true)
+    // Allow localhost for dev
+    if (origin.startsWith('http://localhost:')) return cb(null, true)
+    return cb(null, false)
+  },
   credentials: true,
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
