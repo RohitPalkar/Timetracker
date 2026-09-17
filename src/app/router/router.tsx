@@ -103,6 +103,9 @@ export const router = createBrowserRouter([
             children: [
               // ── Overview ───────────────────────────────
               { path: '/dashboard', element: <DashboardPage /> },
+              // Distinct routes to prevent nav duplicate active states
+              { path: '/my-work', element: <Navigate to="/dashboard" replace /> },
+              { path: '/monitoring', element: <AccessDeniedPage /> },
 
               // ── Project Management ────────────────────
               { path: '/projects', element: <ProjectsListPage /> },

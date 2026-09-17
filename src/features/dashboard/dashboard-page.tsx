@@ -1,77 +1,116 @@
 import * as React from 'react'
-import { Bell, RefreshCw } from 'lucide-react'
-import { PageHeader } from '@/components/common/page-header'
-import { PageLayout } from '@/components/common/page-layout'
+import { RefreshCw, Bell } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ErrorState } from '@/components/feedback/error-state'
 import { NotificationsDrawer } from '@/components/common/notifications-drawer'
 import { useAuth } from '@/store/auth'
 import { useDashboardFilters } from '@/store/dashboard'
-import { personaForRole, getDashboardConfig } from '@/config/dashboard-config'
 import { useDashboard } from './dashboard-queries'
-import { DashboardFilters } from './components/dashboard-filters'
 import { DashboardSkeleton } from './components/dashboard-skeleton'
-import { MyTimesheetGroup } from './components/timesheet/my-timesheet-group'
-import { MyWorkGroup } from './components/work/my-work-group'
+import { DashboardHeader } from './components/dashboard-header'
+import { CurrentStateGroup } from './components/current-state/current-state-group'
+import { WorkSnapshot } from './components/work/work-snapshot'
+import { AttentionGroup } from './components/attention/attention-group'
+import { ContextSnapshot } from './components/context/context-snapshot'
+import { resolveDashboardContext } from './dashboard-context'
 
+function firstName(full: string): string {
+  return full.trim().split(/\s+/)[0] ?? full
+}
+
+/**
+ * Dashboard — glanceable control surface (§1-4).
+ * 4 zones max: Current State → Work → Attention → Context.
+ * Capability-driven via Feature 01 auth, no persona selector.
+ */
 export function DashboardPage() {
-  const { authUser } = useAuth()
-  const persona = personaForRole(authUser?.roleId)
+  const { user, authUser, roles, permissions, activeOrganization } = useAuth()
   const { filters } = useDashboardFilters()
-  const config = getDashboardConfig(persona)
-  const dashboardQuery = useDashboard(persona, filters)
+  const dashboardQuery = useDashboard(filters)
   const [notificationsOpen, setNotificationsOpen] = React.useState(false)
+
+  const context = React.useMemo(
+    () => resolveDashboardContext({ roles, permissions, legacyRoleId: authUser?.roleId }),
+    [roles, permissions, authUser?.roleId],
+  )
 
   const payload = dashboardQuery.data
   const loading = dashboardQuery.isLoading
   const isError = dashboardQuery.isError
   const error = dashboardQuery.error as Error | null
 
+  // Refresh after actions: simple refetch
+  const handleRefresh = () => {
+    void dashboardQuery.refetch()
+  }
+
   return (
-    <PageLayout
-      header={
-        <PageHeader
-          title={config.title}
-          description={config.description}
-          breadcrumb={[{ label: 'Dashboard' }]}
-          actions={
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => dashboardQuery.refetch()} disabled={loading} aria-label="Refresh dashboard">
-                <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
-                Refresh
-              </Button>
-              <Button variant="outline" size="icon" aria-label="Notifications" onClick={() => setNotificationsOpen(true)}>
-                <Bell className="size-4" aria-hidden="true" />
-              </Button>
-            </div>
-          }
-        />
-      }
-      filters={<DashboardFilters config={config} />}
-    >
+    <div className="flex w-full flex-col gap-4">
+      {/* Header — §5 compact */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <DashboardHeader firstName={firstName(user?.name ?? authUser?.name ?? 'there')} orgName={activeOrganization?.name} />
+        <div className="flex items-center gap-2 self-start">
+          <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading} aria-label="Refresh dashboard" className="h-8">
+            <RefreshCw className={`size-4 ${loading ? 'animate-spin' : ''}`} aria-hidden="true" />
+            Refresh
+          </Button>
+          <Button variant="outline" size="icon" aria-label="Notifications" onClick={() => setNotificationsOpen(true)} className="size-8">
+            <Bell className="size-4" aria-hidden="true" />
+          </Button>
+        </div>
+      </div>
+
+      {/* States — §25-28 */}
       {isError ? (
-        <ErrorState title="Unable to load dashboard" description={error instanceof Error ? error.message : 'Something went wrong.'} onRetry={() => dashboardQuery.refetch()} />
-      ) : !payload ? (
+        <ErrorState
+          title="We couldn't load your dashboard."
+          description={error instanceof Error ? error.message : 'Something went wrong.'}
+          onRetry={handleRefresh}
+        />
+      ) : !payload && loading ? (
         <DashboardSkeleton />
       ) : (
-        <div className="flex flex-col gap-6">
-          {/* My Timesheet — login/logout & time info (kept on dashboard) */}
-          <section aria-label="My Timesheet">
-            <MyTimesheetGroup data={payload.myTimesheet} loading={loading} />
+        <div className="flex flex-col gap-4">
+          {/* Zone 1 — Current State §6 compact, 16px gap */}
+          <section aria-label="Current State">
+            <CurrentStateGroup hrms={payload?.myHRMS ?? null} timesheet={payload?.myTimesheet ?? null} loading={loading} />
           </section>
 
-          {/* My Work — stories, bugs, tasks, sprint (kept on dashboard) */}
-          <section aria-label="My Work">
-            <MyWorkGroup data={payload.myWork} loading={loading} />
-          </section>
+          {/* Mobile priority: Attention before Work (§29). Use order utilities. */}
+          <div className="flex flex-col gap-4">
+            {/* Zone 3 — Attention (priority 2 on mobile) */}
+            <section aria-label="Attention" className="order-2 sm:order-2">
+              <AttentionGroup items={payload?.actionCenter ?? []} loading={loading} />
+            </section>
 
-          <p className="text-center text-[11px] text-muted-foreground">
-            HRMS moved to <span className="font-medium">HRMS</span> tab in navbar • Team & Management moved to Reports/HRMS • Generated at {new Date(payload.generatedAt).toLocaleString()}
-          </p>
+            {/* Zone 2 — Work (priority 3 on mobile) */}
+            <section aria-label="Work" className="order-3 sm:order-1">
+              <WorkSnapshot
+                context={context}
+                myWork={payload?.myWork ?? null}
+                myTeam={payload?.myTeam ?? null}
+                management={payload?.management ?? null}
+                qualityTrend={payload?.qualityTrend ?? []}
+                loading={loading}
+              />
+            </section>
+
+            {/* Zone 4 — Context Snapshot */}
+            <section aria-label="Context Snapshot" className="order-4">
+              <ContextSnapshot context={context} payload={payload ?? null} loading={loading} />
+            </section>
+          </div>
+
+          {/* Partial failure hint — if one domain fails but payload exists, other zones remain usable */}
+          {payload && (
+            <p className="text-center text-[11px] text-muted-foreground">
+              Generated at {new Date(payload.generatedAt).toLocaleString()} · Scope: {context.label} · {activeOrganization?.name}
+            </p>
+          )}
         </div>
       )}
 
       <NotificationsDrawer open={notificationsOpen} onOpenChange={setNotificationsOpen} />
-    </PageLayout>
+    </div>
   )
 }
