@@ -9,8 +9,9 @@
     "rootDir": "src",
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/server.ts", "src/config/**/*", "src/lib/**/*", "src/plugins/**/*", "src/modules/**/*", "src/db/client.ts", "src/db/mock.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "src/db/migrate.ts", "src/db/seed.ts"]
 }
