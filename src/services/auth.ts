@@ -29,7 +29,7 @@ import {
   RESEND_COOLDOWN_SECONDS,
   SESSION_STORAGE_KEY,
 } from '@/constants'
-import { mockDelay } from './http'
+import { IS_MOCK_MODE, mockDelay, request, ApiError } from './http'
 
 // ------------------------------------------------------------------
 // Demo seed — one person, multiple responsibilities architecture
@@ -172,6 +172,37 @@ function writeStoredSession(session: StoredAuthSession) {
   localStorage.setItem(ACTIVE_ORG_KEY, session.activeOrganization.id)
 }
 
+const TOKEN_KEY = 'mytracker.tokens'
+
+interface TokenPair {
+  access_token: string
+  refresh_token?: string
+}
+
+function writeTokens(tokens: TokenPair) {
+  localStorage.setItem(TOKEN_KEY, JSON.stringify(tokens))
+}
+
+function readTokens(): TokenPair | null {
+  const raw = localStorage.getItem(TOKEN_KEY)
+  if (!raw) return null
+  try {
+    return JSON.parse(raw) as TokenPair
+  } catch {
+    return null
+  }
+}
+
+function clearTokens() {
+  localStorage.removeItem(TOKEN_KEY)
+}
+
+function apiHeaders(): Record<string, string> {
+  const tokens = readTokens()
+  if (tokens?.access_token) return { Authorization: `Bearer ${tokens.access_token}` }
+  return {}
+}
+
 function resolvePermissions(roles: RoleKey[]): PermissionKey[] {
   if (roles.includes('super_admin') || roles.includes('org_admin')) return ['admin.all']
   const set = new Set<PermissionKey>()
@@ -189,6 +220,17 @@ function resolvePermissions(roles: RoleKey[]): PermissionKey[] {
 export const authService = {
   /** POST /api/v1/auth/request-otp — validate email and issue demo OTP. */
   async requestOtp(email: string): Promise<OtpRequestResult> {
+    if (!IS_MOCK_MODE) {
+      try {
+        await request('/api/v1/auth/request-otp', { method: 'POST', body: { email } })
+        localStorage.setItem(PENDING_EMAIL_KEY, email.trim().toLowerCase())
+        return { ok: true, resendIn: RESEND_COOLDOWN_SECONDS, hint: undefined }
+      } catch (e: any) {
+        const msg = e instanceof ApiError ? e.message : 'Could not send the code.'
+        return { ok: false, resendIn: 0, error: msg }
+      }
+    }
+
     await mockDelay(650)
     const normalized = email.trim().toLowerCase()
 
@@ -220,6 +262,50 @@ export const authService = {
 
   /** POST /api/v1/auth/verify-otp — validate code and create session. */
   async verifyOtp(email: string, code: string): Promise<AuthResult> {
+    if (!IS_MOCK_MODE) {
+      try {
+        const res = await request<{ access_token: string; refresh_token: string }>('/api/v1/auth/verify-otp', {
+          method: 'POST',
+          body: { email, code },
+        })
+        writeTokens({ access_token: res.access_token, refresh_token: res.refresh_token })
+        // Fetch authoritative me to build rich session
+        const me = await request<AuthMeResponse>('/api/v1/auth/me', {
+          headers: apiHeaders(),
+        } as any)
+        // Convert me to StoredAuthSession for Zustand compat
+        const sess: StoredAuthSession = {
+          userId: me.user.id,
+          email: me.user.email,
+          name: me.user.name,
+          designation: (me.user as any).designation ?? 'Member',
+          roleId: `role-${me.roles[0] ?? 'employee'}`,
+          user: me.user as AuthUser,
+          organizations: me.organizations.map((o) => ({ id: o.id, name: o.name })) as AuthOrganization[],
+          activeOrganization: me.activeOrganization!,
+          membership: {
+            id: me.membership?.id ?? 'mem-1',
+            userId: me.user.id,
+            organizationId: me.activeOrganization!.id,
+            organization: me.activeOrganization!,
+            roles: me.roles as RoleKey[],
+            primaryRole: (me.roles[0] as RoleKey) ?? 'employee',
+            permissions: me.permissions as PermissionKey[],
+          } as any,
+          roles: me.roles as RoleKey[],
+          permissions: me.permissions as PermissionKey[],
+          expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+        }
+        writeStoredSession(sess)
+        localStorage.removeItem(PENDING_EMAIL_KEY)
+        return { ok: true }
+      } catch (e: any) {
+        const msg = e instanceof ApiError ? e.message : 'Verification failed.'
+        const codeErr = e instanceof ApiError ? e.code : undefined
+        return { ok: false, error: msg, code: codeErr }
+      }
+    }
+
     await mockDelay(800)
     const normalized = email.trim().toLowerCase()
     const record = otpStore.get(normalized)
@@ -280,6 +366,9 @@ export const authService = {
 
   /** POST /api/v1/auth/request-otp (resend alias). */
   async resendOtp(email: string): Promise<OtpRequestResult> {
+    if (!IS_MOCK_MODE) {
+      return this.requestOtp(email)
+    }
     await mockDelay(400)
     // Reuse requestOtp logic but don't duplicate checks for cooldown externally
     return this.requestOtp(email)
@@ -287,6 +376,43 @@ export const authService = {
 
   /** GET /api/v1/auth/me — resolve the current authenticated identity. */
   async getMe(): Promise<AuthMeResponse | null> {
+    if (!IS_MOCK_MODE) {
+      const tokens = readTokens()
+      if (!tokens?.access_token) return null
+      try {
+        const me = await request<AuthMeResponse>('/api/v1/auth/me', {
+          headers: { Authorization: `Bearer ${tokens.access_token}` },
+        } as any)
+        // Sync local session for Zustand init
+        const sess: StoredAuthSession = {
+          userId: me.user.id,
+          email: me.user.email,
+          name: me.user.name,
+          designation: (me.user as any).designation ?? 'Member',
+          roleId: `role-${me.roles[0] ?? 'employee'}`,
+          user: me.user as AuthUser,
+          organizations: me.organizations.map((o) => ({ id: o.id, name: o.name })) as AuthOrganization[],
+          activeOrganization: me.activeOrganization!,
+          membership: {
+            id: me.membership?.id ?? 'mem-1',
+            userId: me.user.id,
+            organizationId: me.activeOrganization!.id,
+            organization: me.activeOrganization!,
+            roles: me.roles as RoleKey[],
+            primaryRole: (me.roles[0] as RoleKey) ?? 'employee',
+            permissions: me.permissions as PermissionKey[],
+          } as any,
+          roles: me.roles as RoleKey[],
+          permissions: me.permissions as PermissionKey[],
+          expiresAt: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+        }
+        writeStoredSession(sess)
+        return me
+      } catch {
+        return null
+      }
+    }
+
     await mockDelay(300)
     const session = readStoredSession()
     if (!session) return null
@@ -308,6 +434,8 @@ export const authService = {
         },
       })),
       activeOrganization: activeOrg,
+      membership: { id: session.membership.id, status: 'active' },
+      roles: session.roles,
       permissions: session.permissions,
       capabilities: session.permissions,
     }
@@ -335,6 +463,15 @@ export const authService = {
 
   /** POST /api/v1/auth/logout — invalidate session. */
   async signOut(): Promise<void> {
+    if (!IS_MOCK_MODE) {
+      try {
+        const headers = apiHeaders()
+        await request('/api/v1/auth/logout', { method: 'POST', headers } as any)
+      } catch {
+        // ignore
+      }
+      clearTokens()
+    }
     await mockDelay(200)
     localStorage.removeItem(SESSION_STORAGE_KEY)
     localStorage.removeItem(ACTIVE_ORG_KEY)

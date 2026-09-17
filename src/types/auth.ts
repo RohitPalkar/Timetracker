@@ -58,6 +58,7 @@ export interface AuthMeResponse {
   organizations: Array<{
     id: string
     name: string
+    slug?: string
     membership: {
       id: string
       roles: RoleKey[]
@@ -65,6 +66,11 @@ export interface AuthMeResponse {
     }
   }>
   activeOrganization: AuthOrganization | null
+  membership?: {
+    id: string
+    status: string
+  }
+  roles: RoleKey[]
   permissions: PermissionKey[]
   capabilities: PermissionKey[]
 }
