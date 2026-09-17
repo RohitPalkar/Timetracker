@@ -48,14 +48,15 @@ export function useEligibleProjectManagers(): { managers: User[]; isLoading: boo
 /**
  * Resolve the current actor from the authenticated session. Services enforce
  * scope from `scope` + `actorId`; the UI never widens its own data scope.
- * Until Supabase Auth maps to a real user id, the persona-derived demo actor
- * preserves observable managed/assigned scope.
  */
 export function useProjectActor() {
-  const { authUser } = useAuth()
+  const { user, authUser } = useAuth()
   const persona = personaForRole(authUser?.roleId)
   const config = getProjectConfig(persona)
-  return { persona, actorId: DEMO_ACTOR_BY_PERSONA[persona], scope: config.scope }
+  // Prefer real user id when available (Supabase), fallback to demo actor for mock mode
+  const realUserId = user?.id ?? authUser?.userId
+  const actorId = realUserId ?? DEMO_ACTOR_BY_PERSONA[persona]
+  return { persona, actorId, scope: config.scope }
 }
 
 /**
